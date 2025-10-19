@@ -1,0 +1,29 @@
+name: FreeBSD (with Clang)
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build & Test
+        uses: vmactions/freebsd-vm@v1
+        with:
+          prepare: pkg install -y cmake openssl
+          copyback: false
+          run: |
+            pwd
+            ls -lah
+            echo "---------------"
+            mkdir build
+            cd build
+            cmake -DCMAKE_BUILD_TYPE=Debug ..
+            make neblina
+            make neblina-tests
+            ./neblina-tests
