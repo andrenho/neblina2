@@ -1,0 +1,40 @@
+name: Linux (with GCC)
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+
+    container:
+      image: ghcr.io/mattkretz/cplusplus-ci/gcc16
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: apt-get install -y libssl-dev valgrind
+      - name: Configure CMake
+        run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
+      - name: Build executable
+        working-directory: ./build
+        run: make neblina
+      - name: Build and run tests
+        working-directory: ./build
+        run: make neblina-tests && ./neblina-tests
+      - name: Check for leaks
+        continue-on-error: true
+        working-directory: ./build
+        run: make neblina-tests-leaks
+      - name: Check threads (drd)
+        continue-on-error: true
+        working-directory: ./build
+        run: make neblina-tests-drd
+      - name: Check threads (helgrind)
+        continue-on-error: true
+        working-directory: ./build
+        run: make neblina-tests-helgrind

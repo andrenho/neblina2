@@ -1,0 +1,25 @@
+name: MacOS (with Clang)
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install make
+        run: brew install make openssl
+      - name: Configure CMake
+        run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug  ..
+      - name: Build executable
+        working-directory: ./build
+        run: make neblina neblina-tests
+      - name: Run tests
+        working-directory: ./build
+        run: ./neblina-tests
