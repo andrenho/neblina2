@@ -1,5 +1,7 @@
 #include "kthreadpool.hh"
 
+#include "util/log.hh"
+
 KThreadPool::KThreadPool(size_t thread_count)
     : thread_count_(thread_count)
 {
@@ -11,7 +13,11 @@ KThreadPool::KThreadPool(size_t thread_count)
                 auto task = tasks.dequeue();
                 if (!task)
                     break;  // shutdown signal
-                task();
+                try {
+                    task();
+                } catch (std::exception& e) {
+                    ERR("Task error: %s", e.what());
+                }
             }
         });
         threads_.emplace_back(std::move(t));
@@ -20,6 +26,9 @@ KThreadPool::KThreadPool(size_t thread_count)
 
 void KThreadPool::add_task(Key key, Task task)
 {
+    if (!running_)
+        return;
+
     size_t partition = key % thread_count_;
     threads_.at(partition)->tasks.enqueue(std::move(task));
 }

@@ -2,6 +2,7 @@
 #define NEBLINA_TASK_HH
 
 #include <functional>
+#include <stdexcept>
 
 using Task = std::function<void()>;
 
