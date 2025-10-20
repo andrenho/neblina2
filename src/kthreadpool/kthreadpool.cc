@@ -8,8 +8,9 @@ KThreadPool::~KThreadPool()
 {
 }
 
-void KThreadPool::add_task(uintptr_t key, Task task)
+void KThreadPool::add_task(Key key, Task task)
 {
+    kqueue_.sync_enqueue(key, std::move(task));
 }
 
 size_t KThreadPool::tasks_pending() const
