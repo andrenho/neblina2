@@ -25,11 +25,10 @@ TEST_SUITE("KThreadPool")
         size_t i = 0;
         {
             KThreadPool ktpool(8);
-            ktpool.add_task(1, [&i]() { ++i; std::this_thread::sleep_for(50ms); return true; });
+            ktpool.add_task(1, [&i]() { ++i; std::this_thread::sleep_for(200ms); return true; });
             ktpool.add_task(1, [&i]() { i *= 2; return true; });
-            std::this_thread::sleep_for(20ms);
-            ktpool.add_task(2, [&i]() { i += 2; return true; });
             std::this_thread::sleep_for(50ms);
+            ktpool.add_task(2, [&i]() { i += 2; return true; });
         }
         CHECK(i == 6);
     }
