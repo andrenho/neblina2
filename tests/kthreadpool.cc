@@ -10,7 +10,7 @@ using namespace std::chrono_literals;
 
 TEST_SUITE("KThreadPool")
 {
-    TEST_CASE("KThreadPool - execute two tasks on the same key")
+    TEST_CASE("execute two tasks on the same key")
     {
         std::atomic<size_t> i = 0;
         {
@@ -21,7 +21,7 @@ TEST_SUITE("KThreadPool")
         CHECK(i == 2);
     }
 
-    TEST_CASE("KThreadPool - execute tasks with different keys")
+    TEST_CASE("execute tasks with different keys")
     {
         std::atomic<size_t> i = 0;
         {
@@ -34,5 +34,19 @@ TEST_SUITE("KThreadPool")
         }
         CHECK(i == 6);
     }
+
+#ifndef VALGRIND
+    TEST_CASE("Load test" * doctest::skip(getenv("VALGRIND") != nullptr))
+    {
+        std::atomic<size_t> i = 0;
+        {
+            KThreadPool ktpool(16);
+            for (size_t j = 0; j < 16; ++j)
+                for (size_t k = 0; k < 1000; ++k)
+                    ktpool.add_task(j, [&i]() { ++i; return true; });
+        }
+        CHECK(i == 16000);
+    }
+#endif
 
 }
