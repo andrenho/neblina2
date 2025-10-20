@@ -2,6 +2,8 @@
 #define NEBLINA_KEY_THREAD_POOL_HH
 
 #include <cstddef>
+#include <thread>
+#include <vector>
 
 #include "key.hh"
 #include "task.hh"
@@ -14,14 +16,15 @@ public:
 
     void add_task(Key key, Task task);
 
-    [[nodiscard]] size_t tasks_pending() const;
+    size_t queue_size() const { return kqueue_.queue_size(); }
 
     // non-copyable
     KThreadPool(KThreadPool const&) = delete;
     KThreadPool& operator=(KThreadPool const&) = delete;
 
 private:
-    KQueue kqueue_;
+    KQueue                   kqueue_;
+    std::vector<std::thread> threads_;
 };
 
 #endif //NEBLINA_KEY_THREAD_POOL_HH
