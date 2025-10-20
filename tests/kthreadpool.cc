@@ -21,20 +21,18 @@ TEST_SUITE("KThreadPool")
         CHECK(i == 2);
     }
 
-    /*
     TEST_CASE("KThreadPool - execute tasks with different keys")
     {
         std::atomic<size_t> i = 0;
         {
             KThreadPool ktpool(8);
-            ktpool.add_task(1, [&i]() { printf("A\n"); ++i; std::this_thread::sleep_for(10000ms); printf("Task A completed\n"); return true; });
-            ktpool.add_task(1, [&i]() { printf("B\n"); i = i * 2; printf("Task B completed\n"); return true; });
+            ktpool.add_task(1, [&i]() { ++i; std::this_thread::sleep_for(300ms); return true; });
+            ktpool.add_task(1, [&i]() { i = i * 2; return true; });
             while (i == 0)
                 ;
-            ktpool.add_task(2, [&i]() { printf("C\n"); i += 2; printf("Task C completed\n"); return true; });
+            ktpool.add_task(2, [&i]() { i += 2; return true; });
         }
         CHECK(i == 6);
     }
-     */
 
 }
