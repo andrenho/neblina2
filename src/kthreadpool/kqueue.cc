@@ -14,6 +14,8 @@ void KQueue::sync_enqueue(Key key, Task task)
     if (it == queue_.end())
         queue_.push_back(key);
 
+    printf("Enqueue %zu: ", key); for (Key key: queue_) printf("%zu ", key); printf("\n");
+
     task_map_[key].emplace_back(std::move(task));
 
     cond_.notify_one();
@@ -31,6 +33,8 @@ std::deque<Task> KQueue::sync_dequeue()
 
     Key key_on_front = queue_.front();
     queue_.erase(queue_.begin());  // pop from front
+
+    printf("Dequeue %zu: ", key_on_front); for (Key key: queue_) printf("%zu ", key); printf("\n");
 
     auto it = task_map_.find(key_on_front);
     if (it != task_map_.end()) {
