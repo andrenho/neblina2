@@ -21,12 +21,20 @@ public:
     [[nodiscard]] bool running() { return running_.load(); }
 
 protected:
-    explicit Server(std::unique_ptr<Protocol> protocol, Socket socket, size_t n_threads);
+    Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, size_t n_threads);
 
-    Socket                    server_socket_;
+    [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
+
+    std::unique_ptr<Socket>   server_socket_;
+
+private:
+    void handle_new_client();
+    void handle_client_data_ready(SOCKET fd);
+    void handle_client_disconnected(SOCKET fd);
+
     KThreadPool               kthreadpool_;
-    std::unique_ptr<Protocol> protocol_;
     Poller                    poller_;
+    std::unique_ptr<Protocol> protocol_;
     std::atomic<bool>         running_ = true;
 };
 

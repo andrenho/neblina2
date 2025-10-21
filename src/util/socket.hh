@@ -1,6 +1,8 @@
 #ifndef NEBLINA_SOCKET_HH
 #define NEBLINA_SOCKET_HH
 
+#include "util/log.hh"
+
 #ifdef _WIN32
 
 #  include <winsock2.h>
@@ -42,20 +44,19 @@ typedef struct sockaddr SOCKADDR;
 
 class Socket {
 public:
-    explicit Socket(SOCKET fd) : fd_(fd) {}
-    ~Socket() { close_socket(fd_); }
+    explicit Socket(SOCKET fd) : fd(fd) {}
+    ~Socket() { DBG("Closing socket {}", fd); close_socket(fd); }
+
+    void mark_as_non_blocking();
 
     Socket(Socket&&) noexcept = default;
-    Socket& operator=(Socket&&) noexcept = default;
-
-    [[nodiscard]] SOCKET fd() const { return fd_; }
+    Socket& operator=(Socket&&) noexcept = delete;
 
     // forbid copies
     Socket(const Socket&) = delete;
     Socket& operator=(Socket const&) = delete;
 
-private:
-    SOCKET fd_;
+    const SOCKET fd;
 };
 
 #endif //NEBLINA_SOCKET_HH

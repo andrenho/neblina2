@@ -8,9 +8,9 @@
 #include <iostream>
 #include <utility>
 
-std::string logging_color = "0";
-std::string service_name;
-bool        logging_verbose = false;
+extern std::string logging_color;
+extern std::string service_name;
+extern bool        logging_verbose;
 
 static std::mutex mutex_;
 

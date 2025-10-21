@@ -2,7 +2,9 @@
 #define NEBLINA_ECHO_PROTOCOL_HH
 
 
-class EchoProtocol {
+#include "protocol.hh"
+
+class EchoProtocol : public Protocol {
 
 };
 
