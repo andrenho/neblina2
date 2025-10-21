@@ -27,12 +27,14 @@ protected:
     [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
     virtual void client_disconnected(Socket const& socket) { (void) socket; }
 
+    // these 2 methods are called by a thread - they need to be thread safe!
+    void handle_client_data_ready(SOCKET fd);
+    void handle_client_disconnected(SOCKET fd);
+
     std::unique_ptr<Socket>   server_socket_;
 
 private:
     void handle_new_client();
-    void handle_client_data_ready(SOCKET fd);
-    void handle_client_disconnected(SOCKET fd);
 
     KThreadPool               kthreadpool_;
     Poller                    poller_;

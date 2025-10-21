@@ -9,17 +9,19 @@ Server::Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket> socke
 void Server::iterate()
 {
     for (Poller::Event const& event: poller_.wait()) {
+
         switch (event.type) {
             case Poller::EventType::NewClient:
                 handle_new_client();
                 break;
             case Poller::EventType::ClientDataReady:
-                handle_client_data_ready(event.fd);
+                kthreadpool_.add_task(event.fd, [this, &event]() { handle_client_data_ready(event.fd); });
                 break;
             case Poller::EventType::ClientDisconnected:
-                handle_client_disconnected(event.fd);
+                kthreadpool_.add_task(event.fd, [this, &event]() { handle_client_disconnected(event.fd); });
                 break;
         }
+
     }
 }
 
@@ -41,15 +43,6 @@ void Server::handle_new_client()
     SOCKET fd = client->fd;
     std::unique_ptr<Session> session = protocol_->create_session(std::move(client));
     sessions_[fd] = std::move(session);
-
-    // add session to connection pool
-    // spool_add_session(server->spool, conn_hash->session);
-    // TODO
-}
-
-void Server::handle_client_data_ready(SOCKET fd)
-{
-
 }
 
 void Server::handle_client_disconnected(SOCKET fd)
@@ -73,4 +66,9 @@ void Server::handle_client_disconnected(SOCKET fd)
 
     // remove session from list and close socket
     sessions_.erase(it);
+}
+
+void Server::handle_client_data_ready(SOCKET fd)
+{
+    printf("New data from %d!\n", fd);
 }
