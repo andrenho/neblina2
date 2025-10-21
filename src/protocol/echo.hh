@@ -1,0 +1,10 @@
+#ifndef NEBLINA_ECHO_PROTOCOL_HH
+#define NEBLINA_ECHO_PROTOCOL_HH
+
+
+class EchoProtocol {
+
+};
+
+
+#endif //NEBLINA_ECHO_PROTOCOL_HH
