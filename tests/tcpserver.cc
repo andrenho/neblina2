@@ -1,6 +1,6 @@
 #include "doctest.h"
 
-#include "protocol/echo.hh"
+#include "echo/echo.hh"
 #include "server/tcpserver.hh"
 
 TEST_SUITE("TCP Server")

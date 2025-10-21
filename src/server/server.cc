@@ -38,13 +38,9 @@ void Server::handle_new_client()
     poller_.add_client(client.get());
 
     // create session and add to map
-    /*
-    SessionHash* conn_hash = MALLOC(sizeof *conn_hash);
-    conn_hash->fd = client_fd;
-    conn_hash->session = server->create_session_cb(client_fd, server->session_data);
-    HASH_ADD_INT(server->session_hash, fd, conn_hash);
-     */
-    // TODO
+    SOCKET fd = client->fd;
+    std::unique_ptr<Session> session = protocol_->create_session(std::move(client));
+    sessions_[fd] = std::move(session);
 
     // add session to connection pool
     // spool_add_session(server->spool, conn_hash->session);
@@ -58,5 +54,23 @@ void Server::handle_client_data_ready(SOCKET fd)
 
 void Server::handle_client_disconnected(SOCKET fd)
 {
-    printf("New client disconnected!\n");
+    DBG("Client disconnected from socket {}", fd);
+
+    // find connection
+    auto it = sessions_.find(fd);
+    if (it == sessions_.end())
+        return;
+    auto const& session = it->second;
+
+    client_disconnected(session->socket());
+
+    // remove connection from connection pool
+    // TODO
+    // spool_remove_session(server->spool, conn_hash->session);
+
+    // remove socket from poller
+    poller_.remove_client(&session->socket());
+
+    // remove session from list and close socket
+    sessions_.erase(it);
 }

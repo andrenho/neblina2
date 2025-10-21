@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <memory>
+#include <unordered_map>
 
 #include "kthreadpool/kthreadpool.hh"
 #include "protocol/protocol.hh"
@@ -24,6 +25,7 @@ protected:
     Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, size_t n_threads);
 
     [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
+    virtual void client_disconnected(Socket const& socket) { (void) socket; }
 
     std::unique_ptr<Socket>   server_socket_;
 
@@ -36,6 +38,7 @@ private:
     Poller                    poller_;
     std::unique_ptr<Protocol> protocol_;
     std::atomic<bool>         running_ = true;
+    std::unordered_map<SOCKET, std::unique_ptr<Session>> sessions_;
 };
 
 

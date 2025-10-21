@@ -75,7 +75,7 @@ set(SRC_FILES "${SRC_FILES};${ADDITIONAL_FILES}")
 add_executable(${PROJECT_NAME} main.cc ${SRC_FILES})
 
 # tests
-file(GLOB TEST_FILES CONFIGURE_DEPENDS tests/*.cc tests/doctest.h)
+file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS tests/*.cc tests/doctest.h)
 add_executable(${PROJECT_NAME}-tests EXCLUDE_FROM_ALL ${TEST_FILES} ${SRC_FILES})
 #add_executable(tests-infloop EXCLUDE_FROM_ALL tests/watchdog/infloop.c)
 #add_executable(tests-error EXCLUDE_FROM_ALL tests/watchdog/error.c)
