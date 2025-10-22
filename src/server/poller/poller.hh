@@ -2,7 +2,6 @@
 #define NEBLINA_POLLER_HH
 
 #include <chrono>
-#include <experimental/propagate_const>
 using namespace std::chrono_literals;
 
 #include "util/socket.hh"
@@ -28,7 +27,7 @@ private:
     Socket const& server_socket_;
 
     struct Custom;
-    std::experimental::propagate_const<std::unique_ptr<Custom>> p;
+    std::unique_ptr<Custom> p;
 
     static constexpr size_t EVENT_BUFFER_SZ = 64;
 };
