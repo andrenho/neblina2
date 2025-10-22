@@ -28,6 +28,8 @@ TEST_SUITE("TCP Server")
     TEST_CASE("Simple echo")
     {
         logging_verbose = true;
+        logging_dest = stderr;
+
         std::thread t = run_server();
         while (!server_ready) {}
 

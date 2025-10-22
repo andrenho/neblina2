@@ -11,6 +11,7 @@
 extern std::string logging_color;
 extern std::string service_name;
 extern bool        logging_verbose;
+extern FILE*       logging_dest;
 
 static std::mutex mutex_;
 
@@ -19,19 +20,19 @@ void DBG(std::format_string<Args...> fmt, Args&&... a) {
     std::unique_lock<std::mutex> lock(mutex_);
     if (!logging_verbose)
         return;
-    std::cout << std::format("\x1b[{}m{:13}: ", logging_color, service_name) + std::format(fmt, std::forward<Args>(a)...) + "\x1b[0m\n";
+    fprintf(logging_dest, "%s", (std::format("\x1b[{}m{:13}: ", logging_color, service_name) + std::format(fmt, std::forward<Args>(a)...) + "\x1b[0m\n").c_str());
 }
 
 template <typename... Args>
 void LOG(std::format_string<Args...> fmt, Args&&... a) {
     std::unique_lock<std::mutex> lock(mutex_);
-    std::cout << std::format("\x1b[{}m{:13}: ", logging_color, service_name) + std::format(fmt, std::forward<Args>(a)...) + "\x1b[0m\n";
+    fprintf(logging_dest, "%s", (std::format("\x1b[{}m{:13}: ", logging_color, service_name) + std::format(fmt, std::forward<Args>(a)...) + "\x1b[0m\n").c_str());
 }
 
 template <typename... Args>
 void ERR(std::format_string<Args...> fmt, Args&&... a) {
     std::unique_lock<std::mutex> lock(mutex_);
-    std::cerr << service_name + ": " + std::format(fmt, std::forward<Args>(a)...) + "\n";
+    fprintf(stderr, "%s: %s\n", service_name.c_str(), std::format(fmt, std::forward<Args>(a)...).c_str());
 }
 
 #endif //LOG_HH
