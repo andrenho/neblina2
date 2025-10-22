@@ -6,10 +6,11 @@ on:
 
 jobs:
   build:
+    runs-on: ubuntu-latest
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    runs-on: ubuntu-latest
+    timeout-minutes: 8
 
     container:
       image: ghcr.io/mattkretz/cplusplus-ci/gcc16
