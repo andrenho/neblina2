@@ -33,10 +33,19 @@ TEST_SUITE("TCP Server")
         std::thread t = run_server();
         while (!server_ready) {}
 
-        TCPClient client("127.0.0.1", PORT);
-        client.send("hello\r\n");
-        std::string response = client.recv_spinlock(7, 100ms);
-        CHECK(response == "hello\r\n");
+        {
+            TCPClient client1("127.0.0.1", PORT);
+            TCPClient client2("127.0.0.1", PORT);
+
+            client1.send("hello\r\n");
+            client2.send("hellw\r\n");
+
+            std::string response = client1.recv_spinlock(7, 100ms);
+            CHECK(response == "hello\r\n");
+
+            response = client2.recv_spinlock(7, 100ms);
+            CHECK(response == "hellw\r\n");
+        }
 
         server_running = false;
         t.join();
