@@ -54,14 +54,19 @@ TEST_SUITE("Load test")
 #define CLIENTS 10000
 
         std::vector<std::unique_ptr<TCPClient>> clients;
+        fprintf(stderr, "1\n");
         for (size_t j = 0; j < CLIENTS; ++j)
             clients.push_back(std::make_unique<TCPClient>("127.0.0.1", PORT));
+        fprintf(stderr, "2\n");
         for (size_t j = 0; j < CLIENTS; ++j)
             clients[j]->send("hello\r\n");
+        fprintf(stderr, "3\n");
         for (size_t j = 0; j < CLIENTS; ++j) {
             std::string response = clients[j]->recv_spinlock(7, 100ms);
             CHECK(response == "hello\r\n");
+            fprintf(stderr, "%zu\n", j);
         }
+        fprintf(stderr, "4\n");
 
         server_running = false;
         t.join();
