@@ -1,7 +1,7 @@
 #include "server.hh"
 
 Server::Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket> socket, size_t n_threads)
-    : protocol_(std::move(protocol)), server_socket_(std::move(socket)), kthreadpool_(n_threads), poller_(*server_socket_)
+    : protocol_(std::move(protocol)), server_socket_(std::move(socket)), poller_(*server_socket_), kthreadpool_(n_threads)
 {
 
 }
@@ -15,10 +15,10 @@ void Server::iterate()
                 handle_new_client();
                 break;
             case Poller::EventType::ClientDataReady:
-                kthreadpool_.add_task(event.fd, [this, &event]() { handle_client_data_ready(event.fd); });
+                kthreadpool_.add_task(event.fd, [this, fd=event.fd]() { handle_client_data_ready(fd); });
                 break;
             case Poller::EventType::ClientDisconnected:
-                kthreadpool_.add_task(event.fd, [this, &event]() { handle_client_disconnected(event.fd); });
+                kthreadpool_.add_task(event.fd, [this, fd=event.fd]() { handle_client_disconnected(fd); });
                 break;
         }
 
@@ -54,8 +54,6 @@ void Server::handle_client_disconnected(SOCKET fd)
     if (it == sessions_.end())
         return;
     auto const& session = it->second;
-
-    client_disconnected(session->socket());
 
     // remove socket from poller
     poller_.remove_client(&session->socket());

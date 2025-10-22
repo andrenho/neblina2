@@ -27,7 +27,10 @@ Poller::Poller(Socket const& server_socket)
         throw NonRecoverableException("Could not initialize socket fd in epoll: "s + strerror(errno));
 }
 
-Poller::~Poller() = default;
+Poller::~Poller()
+{
+    close_socket(p->epoll_fd);
+}
 
 std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
 {

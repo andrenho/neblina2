@@ -25,7 +25,6 @@ protected:
     Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, size_t n_threads);
 
     [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
-    virtual void client_disconnected(Socket const& socket) { (void) socket; }
 
     // these 4 methods are called by a thread - they need to be thread safe!
     void                handle_client_data_ready(SOCKET fd);
@@ -39,11 +38,11 @@ protected:
 private:
     void handle_new_client();
 
-    KThreadPool               kthreadpool_;
     Poller                    poller_;
     std::unique_ptr<Protocol> protocol_;
     std::atomic<bool>         running_ = true;
     std::unordered_map<SOCKET, std::unique_ptr<Session>> sessions_;
+    KThreadPool               kthreadpool_;
 };
 
 
