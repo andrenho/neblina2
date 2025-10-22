@@ -2,12 +2,13 @@
 #define NEBLINA_ECHO_PROTOCOL_HH
 
 #include "protocol/protocol.hh"
+#include "protocol/split_session.hh"
 
-class EchoSession : public Session {   // TODO - use LineSession
+class EchoSession : public SplitSession {   // TODO - use LineSession
 public:
-    using Session::Session;
+    using SplitSession::SplitSession;
 
-    std::string new_data(std::string const& data) override;
+    std::string new_strings(const std::vector<std::string> &strs) override;
 };
 
 class EchoProtocol : public Protocol {
