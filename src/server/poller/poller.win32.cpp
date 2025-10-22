@@ -26,10 +26,10 @@ Poller::Poller(Socket const& server_socket)
         throw NonRecoverableException("Could not initialize IOCP: "s + std::to_string(GetLastError()));
 
     HANDLE result = CreateIoCompletionPort(
-            (HANDLE)server_socket_.fd,
+            reinterpret_cast<HANDLE>(server_socket_.fd),  // associate socket handle
             p->iocp,
-            reinterpret_cast<ULONG_PTR>(server_socket_.fd),
-            0
+            static_cast<ULONG_PTR>(server_socket_.fd),    // completion key
+            0                                             // system-chosen concurrency
     );
 
     if (!result)
@@ -43,11 +43,11 @@ Poller::~Poller()
 
 std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
 {
-    DWORD bytes_transferred;
-    ULONG_PTR completion_key;
+    DWORD bytes_transferred = 0;
+    ULONG_PTR completion_key = 0;
     LPOVERLAPPED overlapped = nullptr;
 
-    DWORD wait_ms = timeout.count();
+    DWORD wait_ms = static_cast<DWORD>(timeout.count());
     BOOL ok = GetQueuedCompletionStatus(
             p->iocp,
             &bytes_transferred,
@@ -60,23 +60,20 @@ std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
 
     if (!ok) {
         DWORD err = GetLastError();
-        if (err == WAIT_TIMEOUT)
-            return {};
-        if (err == ERROR_OPERATION_ABORTED)
+        if (err == WAIT_TIMEOUT || err == ERROR_OPERATION_ABORTED)
             return {};
         throw NonRecoverableException("IOCP wait error: "s + std::to_string(err));
     }
 
-    SOCKET fd = reinterpret_cast<SOCKET>(completion_key);
+    SOCKET fd = static_cast<SOCKET>(completion_key);
 
     if (fd == server_socket_.fd) {
         evs.emplace_back(EventType::NewClient, fd);
     } else {
-        if (bytes_transferred == 0) {
+        if (bytes_transferred == 0)
             evs.emplace_back(EventType::ClientDisconnected, fd);
-        } else {
+        else
             evs.emplace_back(EventType::ClientDataReady, fd);
-        }
     }
 
     return evs;
@@ -85,9 +82,9 @@ std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
 void Poller::add_client(const Socket *client_socket)
 {
     HANDLE result = CreateIoCompletionPort(
-            (HANDLE)client_socket->fd,
+            reinterpret_cast<HANDLE>(client_socket->fd),
             p->iocp,
-            reinterpret_cast<ULONG_PTR>(client_socket->fd),
+            static_cast<ULONG_PTR>(client_socket->fd),
             0
     );
 
