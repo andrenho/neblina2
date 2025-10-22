@@ -57,10 +57,6 @@ void Server::handle_client_disconnected(SOCKET fd)
 
     client_disconnected(session->socket());
 
-    // remove connection from connection pool
-    // TODO
-    // spool_remove_session(server->spool, conn_hash->session);
-
     // remove socket from poller
     poller_.remove_client(&session->socket());
 
@@ -70,5 +66,12 @@ void Server::handle_client_disconnected(SOCKET fd)
 
 void Server::handle_client_data_ready(SOCKET fd)
 {
-    printf("New data from %d!\n", fd);
+    auto it = sessions_.find(fd);
+    if (it == sessions_.end())
+        return;
+    auto const& session = it->second;
+
+    std::string request = recv(*session);
+    std::string response = session->new_data(request);
+    kthreadpool_.add_task(fd, [this, &session, response]() { send(*session, response); });  // TODO - send partial data for large blocks
 }
