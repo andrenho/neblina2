@@ -45,12 +45,18 @@ std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
 
     for (int i = 0; i < n_events; ++i) {
         auto fd = (SOCKET) events[i].ident;
-        if (fd == server_socket_.fd)
+        if (fd == server_socket_.fd) {
             evs.emplace_back(EventType::NewClient, server_socket_.fd);
-        else if (events[i].flags & EV_EOF)
+        } else if (events[i].flags & EV_EOF) {
             evs.emplace_back(EventType::ClientDisconnected, fd);
-        else
+
+            struct kevent del_event {};
+            EV_SET(&del_event, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+            if (kevent(p->kqueue_fd, &del_event, 1, nullptr, 0, nullptr))
+                throw NonRecoverableException("Could not remove client socket from kqueue: "s + strerror(errno));
+        } else {
             evs.emplace_back(EventType::ClientDataReady, fd);
+        }
     }
 
     return evs;
@@ -66,8 +72,5 @@ void Poller::add_client(const Socket *client_socket)
 
 void Poller::remove_client(const Socket *client_socket)
 {
-    struct kevent del_event {};
-    EV_SET(&del_event, client_socket->fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-    if (kevent(p->kqueue_fd, &del_event, 1, nullptr, 0, nullptr))
-        throw NonRecoverableException("Could not remove client socket from kqueue: "s + strerror(errno));
+    (void) client_socket;
 }

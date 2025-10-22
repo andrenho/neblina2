@@ -16,7 +16,7 @@ KThreadPool::KThreadPool(size_t thread_count)
                 try {
                     task();
                 } catch (std::exception& e) {
-                    ERR("Task error: %s", e.what());
+                    ERR("Task error: {}", e.what());
                 }
             }
         });
