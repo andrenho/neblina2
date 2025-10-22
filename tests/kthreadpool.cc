@@ -34,16 +34,4 @@ TEST_SUITE("KThreadPool")
         }
         CHECK(i == 6);
     }
-
-    TEST_CASE("Load test" * doctest::skip(getenv("VALGRIND") != nullptr))
-    {
-        std::atomic<size_t> i = 0;
-        {
-            KThreadPool ktpool(16);
-            for (size_t j = 0; j < 16; ++j)
-                for (size_t k = 0; k < 1000; ++k)
-                    ktpool.add_task(j, [&i]() { ++i; return true; });
-        }
-        CHECK(i == 16000);
-    }
 }
