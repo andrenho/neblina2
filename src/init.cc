@@ -17,6 +17,11 @@ static Init init;
 
 Init::Init()
 {
+    logging_color = "0";
+    service_name = "(undefined)";
+    logging_verbose = false;
+    logging_dest = stdout;
+
     // initialize Winsock
 #ifdef _WIN32
     WSADATA wsaData;
@@ -34,7 +39,7 @@ Init::Init()
     if (rl.rlim_cur < desired_rl) {
         rl.rlim_cur = desired_rl;
         if (setrlimit(RLIMIT_NOFILE, &rl) != 0)
-            throw std::runtime_error("Could not set file limit: "s + strerror(errno));
+            LOG("Could not set file limit: {}", strerror(errno));
     }
 #endif
 }

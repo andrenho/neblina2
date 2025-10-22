@@ -1,4 +1,5 @@
-#include "doctest.h"
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include "../tests/doctest.h"
 
 #include <atomic>
 
@@ -50,7 +51,7 @@ TEST_SUITE("Load test")
         std::thread t = run_server();
         while (!server_ready) {}
 
-#define CLIENTS 1000
+#define CLIENTS 10000
 
         std::vector<std::unique_ptr<TCPClient>> clients;
         for (size_t j = 0; j < CLIENTS; ++j)
