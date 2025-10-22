@@ -35,7 +35,6 @@ TEST_SUITE("KThreadPool")
         CHECK(i == 6);
     }
 
-#ifndef VALGRIND
     TEST_CASE("Load test" * doctest::skip(getenv("VALGRIND") != nullptr))
     {
         std::atomic<size_t> i = 0;
@@ -47,6 +46,4 @@ TEST_SUITE("KThreadPool")
         }
         CHECK(i == 16000);
     }
-#endif
-
 }

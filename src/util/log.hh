@@ -8,9 +8,9 @@
 #include <iostream>
 #include <utility>
 
-std::string logging_color = "0";
-std::string service_name;
-bool        logging_verbose = false;
+extern std::string logging_color;
+extern std::string service_name;
+extern bool        logging_verbose;
 
 static std::mutex mutex_;
 
@@ -19,13 +19,13 @@ void DBG(std::format_string<Args...> fmt, Args&&... a) {
     std::unique_lock<std::mutex> lock(mutex_);
     if (!logging_verbose)
         return;
-    std::cout << std::format("\e[{}m{:13}: ", logging_color, service_name) + std::format(fmt, std::forward<Args>(a)...) + "\e[0m\n";
+    std::cout << std::format("\x1b[{}m{:13}: ", logging_color, service_name) + std::format(fmt, std::forward<Args>(a)...) + "\x1b[0m\n";
 }
 
 template <typename... Args>
 void LOG(std::format_string<Args...> fmt, Args&&... a) {
     std::unique_lock<std::mutex> lock(mutex_);
-    std::cout << std::format("\e[{}m{:13}: ", logging_color, service_name) + std::format(fmt, std::forward<Args>(a)...) + "\e[0m\n";
+    std::cout << std::format("\x1b[{}m{:13}: ", logging_color, service_name) + std::format(fmt, std::forward<Args>(a)...) + "\x1b[0m\n";
 }
 
 template <typename... Args>
