@@ -10,7 +10,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    timeout-minutes: 8
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v4
@@ -18,4 +18,4 @@ jobs:
         with:
           arch: x64
       - name: Run tests
-        run: mkdir build && cd build && cmake .. && msbuild neblina.sln /t:neblina,neblina-tests && cd Debug && dir && .\neblina-tests.exe && cd ..
+        run: mkdir build && cd build && cmake .. && msbuild neblina.sln /t:neblina,neblina-tests,neblina-load-test && cd Debug && dir && .\neblina-tests.exe && .\neblina-load-test

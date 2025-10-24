@@ -24,3 +24,6 @@ jobs:
       - name: Run tests
         working-directory: ./build
         run: ./neblina-tests
+      - name: Load test
+        working-directory: ./build
+        run: make neblina-load-test && ./neblina-load-test

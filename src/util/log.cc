@@ -1,5 +1,6 @@
 #include "log.hh"
 
-std::string logging_color = "0";
-std::string service_name = "(undefined)";
-bool        logging_verbose = false;
+std::string logging_color;
+std::string service_name;
+bool        logging_verbose;
+FILE*       logging_dest;
