@@ -6,6 +6,7 @@
 
 using namespace std::chrono_literals;
 
+/*
 #include "kthreadpool/kthreadpool.hh"
 
 TEST_SUITE("KThreadPool")
@@ -35,3 +36,4 @@ TEST_SUITE("KThreadPool")
         CHECK(i == 6);
     }
 }
+ */

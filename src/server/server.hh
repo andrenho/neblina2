@@ -5,10 +5,10 @@
 #include <memory>
 #include <unordered_map>
 
-#include "kthreadpool/kthreadpool.hh"
 #include "protocol/protocol.hh"
 #include "util/socket.hh"
 #include "server/poller/poller.hh"
+#include "server_thread.hh"
 
 class Server {
 public:
@@ -26,23 +26,20 @@ protected:
 
     [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
 
-    // these 4 methods are called by a thread - they need to be thread safe!
-    void                handle_client_data_ready(SOCKET fd);
-    void                handle_client_disconnected(SOCKET fd);
+    // these 2 methods are called by a thread - they need to be thread safe!
     virtual std::string recv(Session const &session) const = 0;
     virtual void        send(Session const &session, std::string const &data) const = 0;
-
 
     std::unique_ptr<Socket>   server_socket_;
 
 private:
     void handle_new_client();
+    [[nodiscard]] size_t thread_hash(SOCKET fd) const;
 
-    Poller                    poller_;
-    std::unique_ptr<Protocol> protocol_;
-    std::atomic<bool>         running_ = true;
-    std::unordered_map<SOCKET, std::unique_ptr<Session>> sessions_;
-    KThreadPool               kthreadpool_;
+    Poller                                      poller_;
+    std::unique_ptr<Protocol>                   protocol_;
+    std::atomic<bool>                           running_ = true;
+    std::vector<std::unique_ptr<ServerThread>>  server_threads_;
 };
 
 

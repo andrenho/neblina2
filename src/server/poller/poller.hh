@@ -15,16 +15,15 @@ public:
         SOCKET    fd;
     };
 
-    explicit Poller(Socket const& server_socket);
+    explicit Poller(SOCKET server_fd);
     ~Poller();
 
     std::vector<Event> wait(std::chrono::milliseconds timeout=50ms);
 
-    void add_client(Socket const* client_socket);
-    void remove_client(Socket const* client_socket);
+    void add_client(SOCKET client_fd);
 
 private:
-    Socket const& server_socket_;
+    SOCKET server_fd_;
 
     struct Custom;
     std::unique_ptr<Custom> p;
