@@ -21,14 +21,14 @@ public:
 
     [[nodiscard]] bool running() { return running_.load(); }
 
+    // these 2 methods are called by a thread - they need to be thread safe!
+    virtual std::string recv(SOCKET fd) const = 0;
+    virtual void        send(SOCKET fd, std::string const &data) const = 0;
+
 protected:
     Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, size_t n_threads);
 
     [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
-
-    // these 2 methods are called by a thread - they need to be thread safe!
-    virtual std::string recv(Session const &session) const = 0;
-    virtual void        send(Session const &session, std::string const &data) const = 0;
 
     std::unique_ptr<Socket>   server_socket_;
 

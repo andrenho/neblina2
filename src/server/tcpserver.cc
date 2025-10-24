@@ -89,11 +89,11 @@ std::unique_ptr<Socket> TCPServer::accept_new_connection() const
     return socket;
 }
 
-std::string TCPServer::recv(Session const& session) const
+std::string TCPServer::recv(SOCKET fd) const
 {
     static constexpr size_t RECV_BUF_SZ = 16 * 1024;
     std::string buf(RECV_BUF_SZ, 0);
-    ssize_t r = ::recv(session.socket().fd, buf.data(), RECV_BUF_SZ, 0);
+    ssize_t r = ::recv(fd, buf.data(), RECV_BUF_SZ, 0);
     if (r < 0) {
         if (errno == EAGAIN)
             return "";
@@ -107,11 +107,11 @@ std::string TCPServer::recv(Session const& session) const
     }
 }
 
-void TCPServer::send(const Session &session, std::string const& data) const
+void TCPServer::send(SOCKET fd, std::string const& data) const
 {
     size_t pos = 0;
     while (pos < data.size()) {
-        ssize_t r = ::send(session.socket().fd, data.data(), data.size(), 0);
+        ssize_t r = ::send(fd, data.data(), data.size(), 0);
         if (r < 0)
             throw std::runtime_error("send error: "s + strerror(errno));
         pos += r;

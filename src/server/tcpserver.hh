@@ -13,8 +13,8 @@ public:
 protected:
     [[nodiscard]] std::unique_ptr<Socket> accept_new_connection() const override;
 
-    std::string recv(const Session &session) const override;
-    void send(const Session &session, const std::string &data) const override;
+    std::string recv(SOCKET fd) const override;
+    void send(SOCKET fd, const std::string &data) const override;
 
 private:
     [[nodiscard]] static SOCKET create_listener(uint16_t port, bool open_to_world);

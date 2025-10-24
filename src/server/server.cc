@@ -42,10 +42,11 @@ void Server::handle_new_client()
 {
     // accept new connection
     std::unique_ptr<Socket> client = accept_new_connection();
-
-    // pass socket ownership to thread
     SOCKET fd = client->fd;
-    server_threads_.at(thread_hash(client->fd))->take_socket_ownership(std::move(client));
+
+    // create session and pass ownership to thread
+    auto session = protocol_->create_session(std::move(client));
+    server_threads_.at(thread_hash(fd))->add_session(std::move(session));
 
     // add socket to poller
     poller_.add_client(fd);
