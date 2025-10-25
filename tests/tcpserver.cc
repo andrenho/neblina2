@@ -27,6 +27,32 @@ static std::thread run_server()
 
 TEST_SUITE("TCP Server")
 {
+    TEST_CASE("Simple echo - singlethreaded")
+    {
+        logging_verbose = true;
+        logging_dest = stderr;
+
+        auto server = TCPServer(PORT, false, std::make_unique<EchoProtocol>(), 2);
+        {
+            TCPClient client1("127.0.0.1", PORT);
+            TCPClient client2("127.0.0.1", PORT);
+
+            client1.send("hello\r\n");
+            client2.send("hellw\r\n");
+
+            std::this_thread::sleep_for(10ms);
+
+            for (size_t i = 0; i < 10; ++i)
+                server.iterate();
+
+            std::string response = client1.recv_spinlock(7, 100ms);
+            CHECK(response == "hello\r\n");
+
+            response = client2.recv_spinlock(7, 100ms);
+            CHECK(response == "hellw\r\n");
+        }
+    }
+    /*
     TEST_CASE("Simple echo")
     {
         logging_verbose = true;
@@ -42,16 +68,15 @@ TEST_SUITE("TCP Server")
             client1.send("hello\r\n");
             client2.send("hellw\r\n");
 
-            /*
             std::string response = client1.recv_spinlock(7, 100ms);
             CHECK(response == "hello\r\n");
 
             response = client2.recv_spinlock(7, 100ms);
             CHECK(response == "hellw\r\n");
-             */
         }
 
         server_running = false;
         t.join();
     }
+     */
 }

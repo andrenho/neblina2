@@ -25,6 +25,8 @@ Poller::Poller(SOCKET server_fd)
     event.data.fd = server_fd_;
     if (epoll_ctl(p->epoll_fd, EPOLL_CTL_ADD, server_fd_, &event) < 0)
         throw NonRecoverableException("Could not initialize socket fd in epoll: "s + strerror(errno));
+
+    DBG("epoll fd {}", p->epoll_fd);
 }
 
 Poller::~Poller()

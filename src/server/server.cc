@@ -7,6 +7,13 @@ Server::Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket> socke
         server_threads_.push_back(std::make_unique<ServerThread>(this));
 }
 
+void Server::finalize()
+{
+    for (auto& thread: server_threads_)
+        thread->finalize();
+    server_threads_.clear();
+}
+
 size_t Server::thread_hash(SOCKET fd) const
 {
     return fd % this->server_threads_.size();
@@ -43,6 +50,8 @@ void Server::handle_new_client()
     // accept new connection
     std::unique_ptr<Socket> client = accept_new_connection();
     SOCKET fd = client->fd;
+
+    DBG("server: new client detected (socket {})", fd);
 
     // create session and pass ownership to thread
     auto session = protocol_->create_session(std::move(client));

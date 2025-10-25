@@ -15,13 +15,14 @@
 class ServerThread {
 public:
     explicit ServerThread(class Server* server);
-
     ~ServerThread();
 
     void add_session(std::unique_ptr<Session> session);
     void remove_socket(SOCKET fd);
 
     void new_data_ready(SOCKET fd);
+
+    void finalize();
 
 private:
     class Server* server_;

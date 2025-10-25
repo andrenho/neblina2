@@ -1,34 +1,50 @@
 #include "server_thread.hh"
 
 #include <cassert>
+#include <stdexcept>
 
 #include "server.hh"
 #include "util/log.hh"
+
+using namespace std;
 
 ServerThread::ServerThread(class Server *server)
     : server_(server)
 {
     DBG("creating server thread");
     thread_ = std::thread([this](){
-        while (running_) {
-            SOCKET fd = pop_from_queue();
-            if (fd != INVALID_SOCKET)
-                process_socket(fd);
+        try {
+            while (running_.load(std::memory_order_relaxed)) {
+                SOCKET fd = pop_from_queue();
+                if (fd != INVALID_SOCKET)
+                    process_socket(fd);
+            }
+        } catch (const std::exception &e) {
+            ERR("server thread exception: {}", e.what());
+        } catch (...) {
+            ERR("server thread unknown exception");
         }
     });
 }
 
 ServerThread::~ServerThread()
 {
-    running_ = false;
+    finalize();
+}
+
+void ServerThread::finalize()
+{
+    running_.store(false, std::memory_order_release);
     DBG("closing server thread");
 
     {
         std::lock_guard<std::mutex> lock(queue_mutex_);
-        cond_.notify_one();
+        cond_.notify_all();
     }
 
-    thread_.join();
+    // now join the thread
+    if (thread_.joinable())
+        thread_.join();
 }
 
 void ServerThread::add_session(std::unique_ptr<Session> session)
@@ -76,9 +92,12 @@ void ServerThread::new_data_ready(SOCKET fd)
 SOCKET ServerThread::pop_from_queue()
 {
     std::unique_lock<std::mutex> lock(queue_mutex_);
-    cond_.wait(lock);
-    if (!running_)
+    cond_.wait(lock, [this] { return !running_.load(std::memory_order_acquire) || !queue_.empty(); });
+
+    // if we were asked to stop and the queue is empty -> exit
+    if (!running_.load(std::memory_order_acquire) && queue_.empty())
         return INVALID_SOCKET;
+
     assert(!queue_.empty());
     SOCKET fd = queue_.front();
     queue_.pop_front();
