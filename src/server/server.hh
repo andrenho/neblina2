@@ -3,7 +3,7 @@
 
 #include <atomic>
 #include <memory>
-#include <unordered_map>
+#include <vector>
 
 #include "protocol/protocol.hh"
 #include "util/socket.hh"

@@ -78,6 +78,17 @@ add_executable(${PROJECT_NAME} main.cc ${SRC_FILES})
 file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS tests/*.cc tests/doctest.h)
 add_executable(${PROJECT_NAME}-tests EXCLUDE_FROM_ALL ${TEST_FILES} ${SRC_FILES})
 add_executable(${PROJECT_NAME}-load-test EXCLUDE_FROM_ALL tests/doctest.h load-tests/loadtest.cc tests/echo/echo.hh tests/echo/echo.cc ${SRC_FILES})
+
+# with sanitizers
+add_executable(${PROJECT_NAME}-tests-san-leaks EXCLUDE_FROM_ALL ${TEST_FILES} ${SRC_FILES})
+add_executable(${PROJECT_NAME}-tests-san-threads EXCLUDE_FROM_ALL ${TEST_FILES} ${SRC_FILES})
+target_link_options(${PROJECT_NAME}-tests-san-leaks PRIVATE -fsanitize=address -fsanitize=undefined)
+target_link_options(${PROJECT_NAME}-tests-san-threads PRIVATE -fsanitize=thread -fPIE)
+
+#TSAN_OPTIONS="halt_on_error=0 suppressions=xxx.supp"
+#ASAN_OPTIONS="detect_leaks=1:halt_on_error=1"
+#leaks --atExit -- ./xxxx"
+
 #add_executable(tests-infloop EXCLUDE_FROM_ALL tests/watchdog/infloop.c)
 #add_executable(tests-error EXCLUDE_FROM_ALL tests/watchdog/error.c)
 #add_executable(tests-nonrecoverable EXCLUDE_FROM_ALL tests/watchdog/nonrecoverable.c)
