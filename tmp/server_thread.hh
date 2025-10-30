@@ -11,11 +11,12 @@
 
 #include "util/socket.hh"
 #include "protocol/session.hh"
+#include "util/pcthread.hh"
 
-class ServerThread {
+class ServerThread : public ProducerConsumerThread<SOCKET> {
 public:
     explicit ServerThread(class Server* server);
-    ~ServerThread();
+    ~ServerThread() override;
 
     void add_session(std::unique_ptr<Session> session);
     void remove_socket(SOCKET fd);

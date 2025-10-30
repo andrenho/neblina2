@@ -4,13 +4,13 @@ Server::Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket> socke
     : protocol_(std::move(protocol)), server_socket_(std::move(socket)), poller_(server_socket_->fd)
 {
     for (size_t i = 0; i < n_threads; ++i)
-        server_threads_.push_back(std::make_unique<ServerThread>(this));
+        server_threads_.push_back(std::make_unique<ServerThread>(this, i));
 }
 
 void Server::finalize()
 {
     for (auto& thread: server_threads_)
-        thread->finalize();
+        thread->stop();
     server_threads_.clear();
 }
 

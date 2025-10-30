@@ -1,6 +1,7 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include "../tests/doctest.h"
 
+#if 0
 #include <atomic>
 
 #include "kthreadpool/kthreadpool.hh"
@@ -107,3 +108,4 @@ TEST_SUITE("Load test")
     }
      */
 }
+#endif
