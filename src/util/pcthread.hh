@@ -40,7 +40,10 @@ public:
     void stop() {
         if (running_.load()) {
             running_.store(false);
-            cond_.notify_one();
+            {
+                std::lock_guard lock(mutex_);
+                cond_.notify_all();
+            }
             if (thread_.joinable())
                 thread_.join();
         }
