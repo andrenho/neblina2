@@ -49,7 +49,7 @@ public:
         }
     }
 
-    void push(T&& t) {
+    void push(T t) {
         std::lock_guard lock(mutex_);
         queue_.push_back(std::move(t));
         cond_.notify_one();

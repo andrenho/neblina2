@@ -28,7 +28,7 @@ void Server::iterate()
                 handle_new_client();
                 break;
             case Poller::EventType::ClientDataReady:
-                server_threads_.at(thread_hash(event.fd))->new_data_ready(event.fd);
+                server_threads_.at(thread_hash(event.fd))->push(event.fd);
                 break;
             case Poller::EventType::ClientDisconnected:
                 DBG("Client disconnected from socket {}", event.fd);

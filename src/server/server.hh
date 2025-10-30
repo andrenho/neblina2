@@ -9,8 +9,9 @@
 #include "util/socket.hh"
 #include "server/poller/poller.hh"
 #include "serverthread.hh"
+#include "isocketio.hh"
 
-class Server {
+class Server : public ISocketIO {
 public:
     virtual ~Server() { finalize(); }
 
@@ -18,10 +19,6 @@ public:
     void run();
 
     [[nodiscard]] bool running() { return running_.load(); }
-
-    // these 2 methods are called by a thread - they need to be thread safe!
-    virtual std::string recv(SOCKET fd) const = 0;
-    virtual void        send(SOCKET fd, std::string const &data) const = 0;
 
 protected:
     Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, size_t n_threads);
