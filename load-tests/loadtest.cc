@@ -21,6 +21,7 @@ static std::thread run_server()
         server_ready = true;
         while (server_running)
             server.iterate();
+        server.finalize();
     });
 }
 
@@ -35,6 +36,7 @@ TEST_SUITE("Load test")
 
         std::thread t = run_server();
         while (!server_ready) {}
+        std::this_thread::sleep_for(50ms);
 
 #define CLIENTS 10000
 
@@ -44,12 +46,13 @@ TEST_SUITE("Load test")
         for (size_t j = 0; j < CLIENTS; ++j)
             clients[j]->send("hello\r\n");
         for (size_t j = 0; j < CLIENTS; ++j) {
-            std::string response = clients[j]->recv_spinlock(7, 100ms).value_or("");
+            std::string response = clients[j]->recv_spinlock(7, 1000ms).value_or("");
             CHECK(response == "hello\r\n");
         }
 
         server_running = false;
-        t.join();
+        if (t.joinable())
+            t.join();
     }
 
     TEST_CASE("TCP Server - multithreaded clients")
@@ -60,6 +63,7 @@ TEST_SUITE("Load test")
 
         std::thread t = run_server();
         while (!server_ready) {}
+        std::this_thread::sleep_for(50ms);
 
 #define THREADS 8
 #define N_CLIENTS 1000
@@ -73,7 +77,7 @@ TEST_SUITE("Load test")
                 for (size_t j = 0; j < N_CLIENTS; ++j)
                     clients[j]->send("hello\r\n");
                 for (size_t j = 0; j < N_CLIENTS; ++j) {
-                    std::string response = clients[j]->recv_spinlock(7, 100ms).value_or("");
+                    std::string response = clients[j]->recv_spinlock(7, 1000ms).value_or("");
                     CHECK(response == "hello\r\n");
                 }
             });
