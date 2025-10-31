@@ -12,11 +12,11 @@ static std::atomic<bool> server_ready;
 
 #define PORT 23456
 
-static std::thread run_server()
+static std::jthread run_server()
 {
     server_running = true;
     server_ready = false;
-    return std::thread([]() {
+    return std::jthread([]() {
         auto server = TCPServer(PORT, false, std::make_unique<EchoProtocol>(), 8u);
         server_ready = true;
         while (server_running)
@@ -34,7 +34,7 @@ TEST_SUITE("Load test")
 
         logging_dest = stderr;
 
-        std::thread t = run_server();
+        std::jthread t = run_server();
         while (!server_ready) {}
         std::this_thread::sleep_for(50ms);
 
@@ -61,7 +61,7 @@ TEST_SUITE("Load test")
 
         logging_dest = stderr;
 
-        std::thread t = run_server();
+        std::jthread t = run_server();
         while (!server_ready) {}
         std::this_thread::sleep_for(50ms);
 
