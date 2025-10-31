@@ -1,5 +1,11 @@
 #include "serverthread.hh"
 
+ServerThread::~ServerThread()
+{
+    std::lock_guard lock(mutex_);
+    sessions_.clear();
+}
+
 void ServerThread::action(SOCKET&& fd)
 {
     if (fd == INVALID_SOCKET)
@@ -33,10 +39,4 @@ std::optional<Session *> ServerThread::find_session(SOCKET fd)
     if (it == sessions_.end())
         return {};
     return it->second.get();
-}
-
-ServerThread::~ServerThread()
-{
-    std::lock_guard lock(mutex_);
-    sessions_.clear();
 }

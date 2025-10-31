@@ -11,11 +11,6 @@ TCPServer::TCPServer(uint16_t port, bool open_to_world, std::unique_ptr<Protocol
 {
 }
 
-TCPServer::~TCPServer()
-{
-    finalize();
-}
-
 SOCKET TCPServer::create_listener(uint16_t port, bool open_to_world)
 {
     SOCKET listener = INVALID_SOCKET;

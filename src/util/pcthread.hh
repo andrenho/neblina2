@@ -45,6 +45,14 @@ public:
     void stop() {
         if (multi_threaded_) {
             if (running_.load()) {
+                // execute the rest of the actions
+                for (;;) {
+                    std::lock_guard lock(mutex_);
+                    if (queue_.empty())
+                        break;
+                }
+
+                // finalize
                 running_.store(false);
                 {
                     std::lock_guard lock(mutex_);

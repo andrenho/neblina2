@@ -23,14 +23,14 @@ public:
     void iterate();
     void run();
 
+    void finalize();
+
     [[nodiscard]] bool running() { return running_.load(); }
 
 protected:
     Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, ThreadCount n_threads);
 
     [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
-
-    void finalize();
 
     std::unique_ptr<Socket>   server_socket_;
 

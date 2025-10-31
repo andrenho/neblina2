@@ -9,7 +9,7 @@
 class TCPServer : public Server {
 public:
     TCPServer(uint16_t port, bool open_to_world, std::unique_ptr<Protocol> protocol, ThreadCount n_threads);
-    ~TCPServer() override;
+    virtual ~TCPServer() { finalize(); }
 
 protected:
     [[nodiscard]] std::unique_ptr<Socket> accept_new_connection() const override;
