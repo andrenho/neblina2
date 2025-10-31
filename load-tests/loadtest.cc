@@ -61,18 +61,18 @@ TEST_SUITE("Load test")
         std::thread t = run_server();
         while (!server_ready) {}
 
-#define THREADS 2
-#define CLIENTS 2
+#define THREADS 8
+#define N_CLIENTS 1000
 
         std::thread tc[THREADS];
         for (size_t i = 0; i < THREADS; ++i) {
             tc[i] = std::thread([]() {
                 std::vector<std::unique_ptr<TCPClient>> clients;
-                for (size_t j = 0; j < CLIENTS; ++j)
+                for (size_t j = 0; j < N_CLIENTS; ++j)
                     clients.push_back(std::make_unique<TCPClient>("127.0.0.1", PORT));
-                for (size_t j = 0; j < CLIENTS; ++j)
+                for (size_t j = 0; j < N_CLIENTS; ++j)
                     clients[j]->send("hello\r\n");
-                for (size_t j = 0; j < CLIENTS; ++j) {
+                for (size_t j = 0; j < N_CLIENTS; ++j) {
                     std::string response = clients[j]->recv_spinlock(7, 100ms).value_or("");
                     CHECK(response == "hello\r\n");
                 }
