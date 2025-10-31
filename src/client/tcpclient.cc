@@ -78,13 +78,13 @@ void TCPClient::send(std::string const& data) const
     }
 }
 
-std::optional<std::string> TCPClient::recv(size_t n_bytes) const
+std::string TCPClient::recv(size_t n_bytes) const
 {
     std::string buf(n_bytes, 0);
     ssize_t r = ::recv(socket_->fd, buf.data(), n_bytes, 0);
     if (r < 0) {
         if (errno == EAGAIN)
-            return {};
+            return "";
         else
             throw std::runtime_error("recv error: "s + strerror(errno));
     } else if (r == 0) {
