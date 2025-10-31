@@ -14,51 +14,61 @@
 template <typename T>
 class ProducerConsumerThread {
 public:
-    explicit ProducerConsumerThread(std::string thread_name) : thread_name_(std::move(thread_name)) {}
+    explicit ProducerConsumerThread(std::string thread_name, bool multi_threaded=true)
+        : thread_name_(std::move(thread_name)), multi_threaded_(multi_threaded) {}
     virtual ~ProducerConsumerThread() = default;
 
     void start(std::function<void(std::string)> const& on_error=nullptr) {
-        running_.store(true);
-        thread_ = std::thread([this, on_error] {
-            for(;;) {
-                std::optional<T> opt_value = pop();
-                if (!opt_value)
-                    return;
-                try {
-                    action(std::move(*opt_value));
-                } catch (std::exception& e) {
-                    if (on_error)
-                        on_error(std::string("thread ") + thread_name_ + " exception: " + e.what());
-                } catch (...) {
-                    if (on_error)
-                        on_error(std::string("thread ") + thread_name_ + " unknown exception");
+        if (multi_threaded_) {
+            running_.store(true);
+            thread_ = std::thread([this, on_error] {
+                for(;;) {
+                    std::optional<T> opt_value = pop();
+                    if (!opt_value)
+                        return;
+                    try {
+                        action(std::move(*opt_value));
+                    } catch (std::exception& e) {
+                        if (on_error)
+                            on_error(std::string("thread ") + thread_name_ + " exception: " + e.what());
+                    } catch (...) {
+                        if (on_error)
+                            on_error(std::string("thread ") + thread_name_ + " unknown exception");
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     void stop() {
-        if (running_.load()) {
-            running_.store(false);
-            {
-                std::lock_guard lock(mutex_);
-                cond_.notify_all();
+        if (multi_threaded_) {
+            if (running_.load()) {
+                running_.store(false);
+                {
+                    std::lock_guard lock(mutex_);
+                    cond_.notify_all();
+                }
+                if (thread_.joinable())
+                    thread_.join();
             }
-            if (thread_.joinable())
-                thread_.join();
         }
     }
 
     void push(T t) {
-        std::lock_guard lock(mutex_);
-        queue_.push_back(std::move(t));
-        cond_.notify_one();
+        if (multi_threaded_) {
+            std::lock_guard lock(mutex_);
+            queue_.push_back(std::move(t));
+            cond_.notify_one();
+        } else {
+            action(std::move(t));
+        }
     }
 
 protected:
     virtual void action(T&& t) = 0;
 
 private:
+    bool                    multi_threaded_;
     std::thread             thread_;
     std::mutex              mutex_;
     std::condition_variable cond_;
@@ -67,6 +77,9 @@ private:
     std::string             thread_name_;
 
     std::optional<T> pop() {
+
+        if (!multi_threaded_)
+            abort();  // shouldn't happen
 
         std::unique_lock lock(mutex_);
         cond_.wait(lock, [&]{ return !queue_.empty() || !running_.load(); });

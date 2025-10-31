@@ -5,12 +5,12 @@ void ServerThread::action(SOCKET&& fd)
     if (fd == INVALID_SOCKET)
         return;
 
-    auto* session = find_session(fd);
+    auto session = find_session(fd);
     if (session) {
         std::string request = io_.recv(fd);
-        std::string response = session->new_data(request);
+        std::string response = (*session)->new_data(request);
         if (!response.empty())
-            io_.send(session->socket().fd, response);
+            io_.send((*session)->socket().fd, response);
     }
 }
 
@@ -26,11 +26,11 @@ void ServerThread::remove_socket(SOCKET fd)
     sessions_.erase(fd);
 }
 
-Session *ServerThread::find_session(SOCKET fd)
+std::optional<Session *> ServerThread::find_session(SOCKET fd)
 {
     std::lock_guard lock(mutex_);
     auto it = sessions_.find(fd);
     if (it == sessions_.end())
-        return nullptr;
+        return {};
     return it->second.get();
 }

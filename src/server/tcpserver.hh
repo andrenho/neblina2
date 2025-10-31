@@ -8,13 +8,13 @@
 
 class TCPServer : public Server {
 public:
-    TCPServer(uint16_t port, bool open_to_world, std::unique_ptr<Protocol> protocol, size_t n_threads);
-    ~TCPServer();
+    TCPServer(uint16_t port, bool open_to_world, std::unique_ptr<Protocol> protocol, ThreadCount n_threads);
+    ~TCPServer() override;
 
 protected:
     [[nodiscard]] std::unique_ptr<Socket> accept_new_connection() const override;
 
-    std::string recv(SOCKET fd) const override;
+    [[nodiscard]] std::string recv(SOCKET fd) const override;
     void send(SOCKET fd, const std::string &data) const override;
 
 private:

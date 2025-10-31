@@ -2,7 +2,9 @@
 #define NEBLINA_SERVER_HH
 
 #include <atomic>
+#include <limits>
 #include <memory>
+#include <variant>
 #include <vector>
 
 #include "protocol/protocol.hh"
@@ -10,6 +12,9 @@
 #include "server/poller/poller.hh"
 #include "serverthread.hh"
 #include "isocketio.hh"
+
+enum class Thread { Single };
+using ThreadCount = std::variant<size_t, Thread>;
 
 class Server : public ISocketIO {
 public:
@@ -21,7 +26,7 @@ public:
     [[nodiscard]] bool running() { return running_.load(); }
 
 protected:
-    Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, size_t n_threads);
+    Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, ThreadCount n_threads);
 
     [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
 

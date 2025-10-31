@@ -6,7 +6,7 @@ using namespace std::string_literals;
 
 #include "util/exceptions/non_recoverable_exception.hh"
 
-TCPServer::TCPServer(uint16_t port, bool open_to_world, std::unique_ptr<Protocol> protocol, size_t n_threads)
+TCPServer::TCPServer(uint16_t port, bool open_to_world, std::unique_ptr<Protocol> protocol, ThreadCount n_threads)
     : Server(std::move(protocol), std::make_unique<Socket>(create_listener(port, open_to_world)), n_threads)
 {
 }

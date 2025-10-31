@@ -11,8 +11,8 @@
 
 class ServerThread : public ProducerConsumerThread<SOCKET> {
 public:
-    explicit ServerThread(ISocketIO const& io, size_t thread_n)
-        : ProducerConsumerThread(std::string("Server thread #") + std::to_string(thread_n)), io_(io) {}
+    explicit ServerThread(ISocketIO const& io, size_t thread_n, bool multithreaded=true)
+        : ProducerConsumerThread(std::string("Server thread #") + std::to_string(thread_n), multithreaded), io_(io) {}
 
     void add_session(std::unique_ptr<Session> session);
     void remove_socket(SOCKET fd);
@@ -25,7 +25,7 @@ private:
     std::unordered_map<SOCKET, std::unique_ptr<Session>> sessions_;
     std::mutex mutex_;
 
-    Session* find_session(SOCKET fd);
+    std::optional<Session*> find_session(SOCKET fd);
 };
 
 #endif //SERVERTHREAD_HH

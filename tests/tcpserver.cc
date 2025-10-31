@@ -1,7 +1,5 @@
 #include "doctest.h"
 
-#if 0
-
 #include <atomic>
 #include <memory>
 #include <thread>
@@ -10,10 +8,30 @@
 #include "server/tcpserver.hh"
 #include "client/tcpclient.hh"
 
+#define PORT 23456
+
+TEST_SUITE("TCP Server")
+{
+    TEST_CASE("Single-threaded server and client")
+    {
+        logging_verbose = true;
+        logging_dest = stderr;
+
+        TCPServer server(PORT, false, std::make_unique<EchoProtocol>(), Thread::Single);
+        TCPClient client("127.0.0.1", PORT);
+
+        client.send("hello\r\n");
+        server.iterate();
+
+        std::string response = client.recv_spinlock(7, 100ms);
+        CHECK(response == "hello\r\n");
+    }
+}
+
+#if 0
+
 static std::atomic<bool> server_running;
 static std::atomic<bool> server_ready;
-
-#define PORT 23456
 
 static std::thread run_server()
 {

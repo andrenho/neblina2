@@ -7,7 +7,7 @@ using namespace std::chrono_literals;
 
 class MyPCThread : public ProducerConsumerThread<int> {
 public:
-    MyPCThread() : ProducerConsumerThread("MyPCThread") {}
+    MyPCThread(bool multithreaded=true) : ProducerConsumerThread("MyPCThread", multithreaded) {}
 
     int value() const { return value_.load(); }
 protected:
@@ -25,9 +25,19 @@ TEST_SUITE("Producer Consumer Thread")
         t.stop();
     }
 
-    TEST_CASE("Produce/consume")
+    TEST_CASE("Produce/consume (multithreaded)")
     {
         MyPCThread t;
+        t.start();
+        t.push(1);
+        t.push(2);
+        t.stop();
+        CHECK(t.value() == 3);
+    }
+
+    TEST_CASE("Produce/consume (single-threaded)")
+    {
+        MyPCThread t(false);
         t.start();
         t.push(1);
         t.push(2);
