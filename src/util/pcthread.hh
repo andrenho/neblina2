@@ -15,7 +15,9 @@ template <typename T>
 class ProducerConsumerThread {
 public:
     explicit ProducerConsumerThread(std::string thread_name, bool multi_threaded=true)
-        : thread_name_(std::move(thread_name)), multi_threaded_(multi_threaded) {}
+        : thread_name_(std::move(thread_name)), multi_threaded_(multi_threaded),
+          cond_(multi_threaded ? std::make_unique<std::condition_variable>() : nullptr) {}
+
     virtual ~ProducerConsumerThread() = default;
 
     void start(std::function<void(std::string)> const& on_error=nullptr) {
@@ -46,7 +48,7 @@ public:
                 running_.store(false);
                 {
                     std::lock_guard lock(mutex_);
-                    cond_.notify_all();
+                    cond_->notify_all();
                 }
                 if (thread_.joinable())
                     thread_.join();
@@ -58,7 +60,7 @@ public:
         if (multi_threaded_) {
             std::lock_guard lock(mutex_);
             queue_.push_back(std::move(t));
-            cond_.notify_one();
+            cond_->notify_one();
         } else {
             action(std::move(t));
         }
@@ -71,10 +73,10 @@ private:
     bool                    multi_threaded_;
     std::thread             thread_;
     std::mutex              mutex_;
-    std::condition_variable cond_;
     std::deque<T>           queue_;
     std::atomic<bool>       running_ = false;
     std::string             thread_name_;
+    std::unique_ptr<std::condition_variable> cond_;
 
     std::optional<T> pop() {
 
@@ -82,7 +84,7 @@ private:
             abort();  // shouldn't happen
 
         std::unique_lock lock(mutex_);
-        cond_.wait(lock, [&]{ return !queue_.empty() || !running_.load(); });
+        cond_->wait(lock, [&]{ return !queue_.empty() || !running_.load(); });
 
         if (queue_.empty() && !running_.load())
             return {};

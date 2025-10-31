@@ -21,6 +21,8 @@ TEST_SUITE("TCP Server")
         TCPClient client("127.0.0.1", PORT);
 
         client.send("hello\r\n");
+        std::this_thread::sleep_for(6ms);
+        server.iterate();
         server.iterate();
 
         std::string response = client.recv_spinlock(7, 100ms);
