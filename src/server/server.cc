@@ -1,5 +1,7 @@
 #include "server.hh"
 
+#include "util/log.hh"
+
 Server::Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket> socket, ThreadCount n_threads)
     : protocol_(std::move(protocol)), server_socket_(std::move(socket)), poller_(server_socket_->fd)
 {
@@ -9,6 +11,9 @@ Server::Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket> socke
     } else {
         server_threads_.push_back(std::make_unique<ServerThread>(*this, 0, false));
     }
+
+    for (auto& thread: server_threads_)
+        thread->start([](std::string const& error) { ERR("{}", error); });  // TODO - deal with errors
 }
 
 void Server::finalize()

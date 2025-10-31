@@ -14,6 +14,8 @@ public:
     explicit ServerThread(ISocketIO const& io, size_t thread_n, bool multithreaded=true)
         : ProducerConsumerThread(std::string("Server thread #") + std::to_string(thread_n), multithreaded), io_(io) {}
 
+    ~ServerThread() override;
+
     void add_session(std::unique_ptr<Session> session);
     void remove_socket(SOCKET fd);
 

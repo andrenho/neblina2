@@ -34,3 +34,9 @@ std::optional<Session *> ServerThread::find_session(SOCKET fd)
         return {};
     return it->second.get();
 }
+
+ServerThread::~ServerThread()
+{
+    std::lock_guard lock(mutex_);
+    sessions_.clear();
+}

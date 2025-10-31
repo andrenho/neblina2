@@ -68,10 +68,12 @@ TEST_SUITE("TCP Server")
             client1.send("hello\r\n");
             client2.send("hellw\r\n");
 
-            std::string response = client1.recv_spinlock(7, 1000ms).value_or("");
+            std::this_thread::sleep_for(100ms);
+
+            std::string response = client1.recv_spinlock(7, 100ms).value_or("");
             CHECK(response == "hello\r\n");
 
-            response = client2.recv_spinlock(7, 1000ms).value_or("");
+            response = client2.recv_spinlock(7, 100ms).value_or("");
             CHECK(response == "hellw\r\n");
         }
 
