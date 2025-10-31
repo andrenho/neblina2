@@ -94,6 +94,17 @@ std::string TCPServer::recv(SOCKET fd) const
     static constexpr size_t RECV_BUF_SZ = 16 * 1024;
     std::string buf(RECV_BUF_SZ, 0);
     ssize_t r = ::recv(fd, buf.data(), RECV_BUF_SZ, 0);
+#ifdef _WIN32
+    if (r == SOCKET_ERROR) {
+        int err = WSAGetLastError();
+        if (err == WSAEWOULDBLOCK) {
+            return "";
+        }
+        else {
+            throw std::runtime_error("recv error: " + std::to_string(err));
+        }
+    }
+#endif
     if (r < 0) {
         if (errno == EAGAIN)
             return "";

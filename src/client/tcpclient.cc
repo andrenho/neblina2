@@ -82,6 +82,17 @@ std::string TCPClient::recv(size_t n_bytes) const
 {
     std::string buf(n_bytes, 0);
     ssize_t r = ::recv(socket_->fd, buf.data(), n_bytes, 0);
+#ifdef _WIN32
+    if (r == SOCKET_ERROR) {
+        int err = WSAGetLastError();
+        if (err == WSAEWOULDBLOCK) {
+            return "";
+        }
+        else {
+            throw std::runtime_error("recv error: " + std::to_string(err));
+        }
+    }
+#endif
     if (r < 0) {
         if (errno == EAGAIN)
             return "";

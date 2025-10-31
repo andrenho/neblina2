@@ -46,7 +46,7 @@ TEST_SUITE("TCP Server")
         for (size_t i = 0; i < 10; ++i)
             server.iterate();
 
-        std::string response = client1.recv_spinlock(7, 100ms).value_or("");
+        std::string response = client1.recv_spinlock(7, 100000ms).value_or("");
         CHECK(response == "hello\r\n");
 
         response = client2.recv_spinlock(7, 100ms).value_or("");

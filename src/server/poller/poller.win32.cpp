@@ -1,98 +1,72 @@
-#include "poller.hh"
+﻿#include "poller.hh"
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <mswsock.h>
-#include <windows.h>
 #include <stdexcept>
-#include <string>
 #include <vector>
-
-#pragma comment(lib, "ws2_32.lib")
-
+#include <algorithm>
 using namespace std::string_literals;
 
-#include "util/exceptions/non_recoverable_exception.hh"
-
 struct Poller::Custom {
-    HANDLE iocp;
+    std::vector<WSAPOLLFD> fds;
 };
 
-Poller::Poller(Socket const& server_socket)
-        : server_socket_(server_socket), p(new Poller::Custom{})
+Poller::Poller(SOCKET server_fd)
+    : server_fd_(server_fd), p(std::make_unique<Custom>())
 {
-    p->iocp = CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, 0);
-    if (!p->iocp)
-        throw NonRecoverableException("Could not initialize IOCP: "s + std::to_string(GetLastError()));
-
-    HANDLE result = CreateIoCompletionPort(
-            reinterpret_cast<HANDLE>(server_socket_.fd),  // associate socket handle
-            p->iocp,
-            static_cast<ULONG_PTR>(server_socket_.fd),    // completion key
-            0                                             // system-chosen concurrency
-    );
-
-    if (!result)
-        throw NonRecoverableException("Could not associate server socket with IOCP: "s + std::to_string(GetLastError()));
+    WSAPOLLFD poll_fd{};
+    poll_fd.fd = server_fd_;
+    poll_fd.events = POLLRDNORM; // readable → new client
+    p->fds.push_back(poll_fd);
 }
 
-Poller::~Poller()
-{
-    CloseHandle(p->iocp);
-}
+Poller::~Poller() = default;
 
 std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
 {
-    DWORD bytes_transferred = 0;
-    ULONG_PTR completion_key = 0;
-    LPOVERLAPPED overlapped = nullptr;
+    int t = timeout.count() < 0 ? -1 : static_cast<int>(timeout.count());
 
-    DWORD wait_ms = static_cast<DWORD>(timeout.count());
-    BOOL ok = GetQueuedCompletionStatus(
-            p->iocp,
-            &bytes_transferred,
-            &completion_key,
-            &overlapped,
-            wait_ms
-    );
+    if (p->fds.empty())
+        return {};
 
-    std::vector<Poller::Event> evs;
+    int r = WSAPoll(p->fds.data(), static_cast<ULONG>(p->fds.size()), t);
+    if (r < 0)
+        throw std::runtime_error("WSAPoll failed"s);
 
-    if (!ok) {
-        DWORD err = GetLastError();
-        if (err == WAIT_TIMEOUT || err == ERROR_OPERATION_ABORTED)
-            return {};
-        throw NonRecoverableException("IOCP wait error: "s + std::to_string(err));
+    std::vector<Event> events;
+    if (r == 0)
+        return events; // timeout
+
+    // index 0 = server socket (new connections)
+    if (p->fds[0].revents & POLLRDNORM) {
+        events.push_back({ EventType::NewClient, server_fd_ });
     }
 
-    SOCKET fd = static_cast<SOCKET>(completion_key);
+    // client sockets
+    for (size_t i = 1; i < p->fds.size(); ++i) {
+        auto& fd = p->fds[i];
 
-    if (fd == server_socket_.fd) {
-        evs.emplace_back(EventType::NewClient, fd);
-    } else {
-        if (bytes_transferred == 0)
-            evs.emplace_back(EventType::ClientDisconnected, fd);
-        else
-            evs.emplace_back(EventType::ClientDataReady, fd);
+        if (fd.revents == 0)
+            continue;
+
+        // client readable
+        if (fd.revents & POLLRDNORM) {
+            events.push_back({ EventType::ClientDataReady, fd.fd });
+        }
+
+        // connection closed or error (Windows: POLLHUP usually implied)
+        if (fd.revents & (POLLHUP | POLLERR | POLLNVAL)) {
+            events.push_back({ EventType::ClientDisconnected, fd.fd });
+        }
     }
 
-    return evs;
+    return events;
 }
 
-void Poller::add_client(const Socket *client_socket)
+void Poller::add_client(SOCKET client_fd)
 {
-    HANDLE result = CreateIoCompletionPort(
-            reinterpret_cast<HANDLE>(client_socket->fd),
-            p->iocp,
-            static_cast<ULONG_PTR>(client_socket->fd),
-            0
-    );
-
-    if (!result)
-        throw NonRecoverableException("Could not add client to IOCP: "s + std::to_string(GetLastError()));
-}
-
-void Poller::remove_client(const Socket *client_socket)
-{
-    (void) client_socket;
+    WSAPOLLFD poll_fd{};
+    poll_fd.fd = client_fd;
+    poll_fd.events = POLLRDNORM; // readable
+    p->fds.push_back(poll_fd);
 }
