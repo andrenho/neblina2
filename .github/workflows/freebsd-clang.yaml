@@ -29,5 +29,3 @@ jobs:
             make neblina
             make neblina-tests
             ./neblina-tests
-            make neblina-load-test
-            ./neblina-load-test

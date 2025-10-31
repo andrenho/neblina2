@@ -14,15 +14,15 @@ struct Poller::Custom {
     int kqueue_fd;
 };
 
-Poller::Poller(Socket const& server_socket)
-    : server_socket_(server_socket), p(new Poller::Custom{})
+Poller::Poller(SOCKET socket_fd)
+    : server_fd_(socket_fd), p(std::make_unique<Poller::Custom>())
 {
     p->kqueue_fd = kqueue();
     if (p->kqueue_fd < 0)
         throw NonRecoverableException("Could not initialize kqueue: "s + strerror(errno));
 
     struct kevent event {};
-    EV_SET(&event, server_socket.fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, nullptr);
+    EV_SET(&event, server_fd_, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, nullptr);
     if (kevent(p->kqueue_fd, &event, 1, nullptr, 0, nullptr) < 0)
         throw NonRecoverableException("Could not initialize socket fd in kqueue: "s + strerror(errno));
 }
@@ -45,8 +45,8 @@ std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
 
     for (int i = 0; i < n_events; ++i) {
         auto fd = (SOCKET) events[i].ident;
-        if (fd == server_socket_.fd) {
-            evs.emplace_back(EventType::NewClient, server_socket_.fd);
+        if (fd == server_fd_) {
+            evs.emplace_back(EventType::NewClient, server_fd_);
         } else if (events[i].flags & EV_EOF) {
             evs.emplace_back(EventType::ClientDisconnected, fd);
 
@@ -62,15 +62,10 @@ std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
     return evs;
 }
 
-void Poller::add_client(const Socket *client_socket)
+void Poller::add_client(SOCKET client_fd)
 {
     struct kevent event {};
-    EV_SET(&event, client_socket->fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+    EV_SET(&event, client_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
     if (kevent(p->kqueue_fd, &event, 1, nullptr, 0, nullptr) < 0)
         throw NonRecoverableException("Could not add client socket in kqueue: "s + strerror(errno));
-}
-
-void Poller::remove_client(const Socket *client_socket)
-{
-    (void) client_socket;
 }

@@ -13,8 +13,8 @@ struct Poller::Custom {
     int epoll_fd;
 };
 
-Poller::Poller(Socket const& server_socket)
-    : server_socket_(server_socket), p(new Poller::Custom{})
+Poller::Poller(SOCKET server_fd)
+    : server_fd_(server_fd), p(new Poller::Custom{})
 {
     p->epoll_fd = epoll_create1(0);
     if (p->epoll_fd < 0)
@@ -22,9 +22,11 @@ Poller::Poller(Socket const& server_socket)
 
     epoll_event event {};
     event.events = EPOLLIN;
-    event.data.fd = server_socket_.fd;
-    if (epoll_ctl(p->epoll_fd, EPOLL_CTL_ADD, server_socket_.fd, &event) < 0)
+    event.data.fd = server_fd_;
+    if (epoll_ctl(p->epoll_fd, EPOLL_CTL_ADD, server_fd_, &event) < 0)
         throw NonRecoverableException("Could not initialize socket fd in epoll: "s + strerror(errno));
+
+    DBG("epoll fd {}", p->epoll_fd);
 }
 
 Poller::~Poller()
@@ -47,10 +49,12 @@ std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
     std::vector<Poller::Event> evs;
 
     for (int i = 0; i < n_events; ++i) {
-        if (events[i].data.fd == server_socket_.fd) {
-            evs.emplace_back(EventType::NewClient, server_socket_.fd);
+        if (events[i].data.fd == server_fd_) {
+            evs.emplace_back(EventType::NewClient, server_fd_);
         } else {
             if (events[i].events & (EPOLLERR | EPOLLHUP | EPOLLRDHUP)) {
+                if (epoll_ctl(p->epoll_fd, EPOLL_CTL_DEL, events[i].data.fd, nullptr) < 0)
+                    throw NonRecoverableException("Could not remove client socket from epoll: "s + strerror(errno));
                 evs.emplace_back(EventType::ClientDisconnected, (SOCKET) events[i].data.fd);
             } else if (events[i].events & (EPOLLIN | EPOLLET)) {
                 evs.emplace_back(EventType::ClientDataReady, (SOCKET) events[i].data.fd);
@@ -61,17 +65,11 @@ std::vector<Poller::Event> Poller::wait(std::chrono::milliseconds timeout)
     return evs;
 }
 
-void Poller::add_client(const Socket *client_socket)
+void Poller::add_client(SOCKET client_fd)
 {
     epoll_event event {};
     event.events = EPOLLIN | EPOLLET | EPOLLRDHUP | EPOLLHUP | EPOLLERR;
-    event.data.fd = client_socket->fd;
-    if (epoll_ctl(p->epoll_fd, EPOLL_CTL_ADD, client_socket->fd, &event) < 0)
+    event.data.fd = client_fd;
+    if (epoll_ctl(p->epoll_fd, EPOLL_CTL_ADD, client_fd, &event) < 0)
         throw NonRecoverableException("Could not add client socket in epoll: "s + strerror(errno));
-}
-
-void Poller::remove_client(const Socket *client_socket)
-{
-    if (epoll_ctl(p->epoll_fd, EPOLL_CTL_DEL, client_socket->fd, nullptr) < 0)
-        throw NonRecoverableException("Could not remove client socket from epoll: "s + strerror(errno));
 }

@@ -1,0 +1,106 @@
+#ifndef PRODUCERCONSUMERTHREAD_HH
+#define PRODUCERCONSUMERTHREAD_HH
+
+#include <atomic>
+#include <condition_variable>
+#include <deque>
+#include <functional>
+#include <mutex>
+#include <optional>
+#include <stdexcept>
+#include <thread>
+#include <utility>
+
+template <typename T>
+class ProducerConsumerThread {
+public:
+    explicit ProducerConsumerThread(std::string thread_name, bool multi_threaded=true)
+        : thread_name_(std::move(thread_name)), multi_threaded_(multi_threaded),
+          cond_(multi_threaded ? std::make_unique<std::condition_variable>() : nullptr) {}
+
+    virtual ~ProducerConsumerThread() = default;
+
+    void start(std::function<void(std::string)> const& on_error=nullptr) {
+        if (multi_threaded_) {
+            running_.store(true);
+            thread_ = std::thread([this, on_error] {
+                for(;;) {
+                    std::optional<T> opt_value = pop();
+                    if (!opt_value)
+                        return;
+                    try {
+                        action(std::move(*opt_value));
+                    } catch (std::exception& e) {
+                        if (on_error)
+                            on_error(std::string("thread ") + thread_name_ + " exception: " + e.what());
+                    } catch (...) {
+                        if (on_error)
+                            on_error(std::string("thread ") + thread_name_ + " unknown exception");
+                    }
+                }
+            });
+        }
+    }
+
+    void stop() {
+        if (multi_threaded_) {
+            if (running_.load()) {
+                // execute the rest of the actions
+                for (;;) {
+                    std::lock_guard lock(mutex_);
+                    if (queue_.empty())
+                        break;
+                }
+
+                // finalize
+                running_.store(false);
+                {
+                    std::lock_guard lock(mutex_);
+                    cond_->notify_all();
+                }
+                if (thread_.joinable())
+                    thread_.join();
+            }
+        }
+    }
+
+    void push(T t) {
+        if (multi_threaded_) {
+            std::lock_guard lock(mutex_);
+            queue_.push_back(std::move(t));
+            cond_->notify_one();
+        } else {
+            action(std::move(t));
+        }
+    }
+
+protected:
+    virtual void action(T&& t) = 0;
+
+private:
+    bool                    multi_threaded_;
+    std::thread             thread_;
+    std::mutex              mutex_;
+    std::deque<T>           queue_;
+    std::atomic<bool>       running_ = false;
+    std::string             thread_name_;
+    std::unique_ptr<std::condition_variable> cond_;
+
+    std::optional<T> pop() {
+
+        if (!multi_threaded_)
+            abort();  // shouldn't happen
+
+        std::unique_lock lock(mutex_);
+        cond_->wait(lock, [&]{ return !queue_.empty() || !running_.load(); });
+
+        if (queue_.empty() && !running_.load())
+            return {};
+
+        T t = std::move(queue_.front());
+        queue_.pop_front();
+        return t;
+    }
+};
+
+#endif //PRODUCERCONSUMERTHREAD_HH

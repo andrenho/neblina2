@@ -11,10 +11,10 @@ public:
     void send(std::string const& data) const override;
 
 protected:
-    [[nodiscard]] std::optional<std::string> recv(size_t n_bytes) const override;
+    [[nodiscard]] std::string recv(size_t n_bytes) const override;
 
 private:
-    std::unique_ptr<Socket> open_connection(std::string const& host, uint16_t port) const;
+    [[nodiscard]] std::unique_ptr<Socket> open_connection(std::string const& host, uint16_t port) const;
 };
 
 

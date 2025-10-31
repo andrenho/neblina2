@@ -1,9 +1,31 @@
 #include "server.hh"
 
-Server::Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket> socket, size_t n_threads)
-    : protocol_(std::move(protocol)), server_socket_(std::move(socket)), poller_(*server_socket_), kthreadpool_(n_threads)
-{
+#include "util/log.hh"
 
+Server::Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket> socket, ThreadCount n_threads)
+    : protocol_(std::move(protocol)), server_socket_(std::move(socket)), poller_(server_socket_->fd)
+{
+    if (size_t const* n = std::get_if<size_t>(&n_threads)) {
+        for (size_t i = 0; i < *n; ++i)
+            server_threads_.push_back(std::make_unique<ServerThread>(*this, i));
+    } else {
+        server_threads_.push_back(std::make_unique<ServerThread>(*this, 0, false));
+    }
+
+    for (auto& thread: server_threads_)
+        thread->start([](std::string const& error) { ERR("{}", error); });  // TODO - deal with errors
+}
+
+void Server::finalize()
+{
+    for (auto& thread: server_threads_)
+        thread->stop();
+    server_threads_.clear();
+}
+
+size_t Server::thread_hash(SOCKET fd) const
+{
+    return fd % this->server_threads_.size();
 }
 
 void Server::iterate()
@@ -15,10 +37,11 @@ void Server::iterate()
                 handle_new_client();
                 break;
             case Poller::EventType::ClientDataReady:
-                kthreadpool_.add_task(event.fd, [this, fd=event.fd]() { handle_client_data_ready(fd); });
+                server_threads_.at(thread_hash(event.fd))->push(event.fd);
                 break;
             case Poller::EventType::ClientDisconnected:
-                kthreadpool_.add_task(event.fd, [this, fd=event.fd]() { handle_client_disconnected(fd); });
+                DBG("Client disconnected from socket {}", event.fd);
+                server_threads_.at(thread_hash(event.fd))->remove_socket(event.fd);
                 break;
         }
 
@@ -35,41 +58,14 @@ void Server::handle_new_client()
 {
     // accept new connection
     std::unique_ptr<Socket> client = accept_new_connection();
+    SOCKET fd = client->fd;
+
+    DBG("server: new client detected (socket {})", fd);
+
+    // create session and pass ownership to thread
+    auto session = protocol_->create_session(std::move(client));
+    server_threads_.at(thread_hash(fd))->add_session(std::move(session));
 
     // add socket to poller
-    poller_.add_client(client.get());
-
-    // create session and add to map
-    SOCKET fd = client->fd;
-    std::unique_ptr<Session> session = protocol_->create_session(std::move(client));
-    sessions_[fd] = std::move(session);
-}
-
-void Server::handle_client_disconnected(SOCKET fd)
-{
-    DBG("Client disconnected from socket {}", fd);
-
-    // find connection
-    auto it = sessions_.find(fd);
-    if (it == sessions_.end())
-        return;
-    auto const& session = it->second;
-
-    // remove socket from poller
-    poller_.remove_client(&session->socket());
-
-    // remove session from list and close socket
-    sessions_.erase(it);
-}
-
-void Server::handle_client_data_ready(SOCKET fd)
-{
-    auto it = sessions_.find(fd);
-    if (it == sessions_.end())
-        return;
-    auto const& session = it->second;
-
-    std::string request = recv(*session);
-    std::string response = session->new_data(request);
-    kthreadpool_.add_task(fd, [this, &session, response]() { send(*session, response); });  // TODO - send partial data for large blocks
+    poller_.add_client(fd);
 }
