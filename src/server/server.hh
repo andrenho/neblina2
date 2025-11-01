@@ -1,48 +1,25 @@
 #ifndef NEBLINA_SERVER_HH
 #define NEBLINA_SERVER_HH
 
-#include <atomic>
-#include <limits>
-#include <memory>
-#include <variant>
-#include <vector>
-
-#include "protocol/protocol.hh"
-#include "util/socket.hh"
 #include "server/poller/poller.hh"
-#include "serverthread.hh"
-#include "isocketio.hh"
+#include "protocol/protocol.hh"
+#include "connection.hh"
 
-enum class Thread { Single };
-using ThreadCount = std::variant<size_t, Thread>;
+#include <memory>
 
-class Server : public ISocketIO {
+class Server {
 public:
-    virtual ~Server() { finalize(); }
-
-    void iterate();
-    void run();
-
-    void finalize();
-
-    [[nodiscard]] bool running() { return running_.load(); }
+    virtual ~Server() { close_socket(fd_); }
 
 protected:
-    Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, ThreadCount n_threads);
+    explicit Server(SOCKET fd, std::unique_ptr<Protocol> protocol) : fd_(fd), poller_(fd), protocol_(std::move(protocol)) {}
 
-    [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
-
-    std::unique_ptr<Socket>   server_socket_;
+    [[nodiscard]] virtual std::unique_ptr<Connection> create_connection(SOCKET fd_) const = 0;
 
 private:
-    void handle_new_client();
-    [[nodiscard]] size_t thread_hash(SOCKET fd) const;
-
-    Poller                                      poller_;
-    std::unique_ptr<Protocol>                   protocol_;
-    std::atomic<bool>                           running_ = true;
-    std::vector<std::unique_ptr<ServerThread>>  server_threads_;
+    SOCKET                    fd_;
+    Poller                    poller_;
+    std::unique_ptr<Protocol> protocol_;
 };
-
 
 #endif //NEBLINA_SERVER_HH

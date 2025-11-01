@@ -40,4 +40,23 @@ typedef struct sockaddr SOCKADDR;
 
 #endif
 
+#include <fcntl.h>
+
+class Socket {
+public:
+    explicit Socket(SOCKET fd) : fd(fd) {}
+    ~Socket() { DBG("Closing socket {}", fd); close_socket(fd); }
+
+    void mark_as_non_blocking();
+
+    Socket(Socket&&) noexcept = default;
+    Socket& operator=(Socket&&) noexcept = delete;
+
+    // forbid copies
+    Socket(const Socket&) = delete;
+    Socket& operator=(Socket const&) = delete;
+
+    const SOCKET fd;
+};
+
 #endif //NEBLINA_SOCKET_HH

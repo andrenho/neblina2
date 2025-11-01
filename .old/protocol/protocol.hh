@@ -4,15 +4,14 @@
 #include <memory>
 
 #include "session.hh"
+#include "util/socket.hh"
 
 class Protocol {
 public:
     virtual ~Protocol() = default;
 
-protected:
-    [[nodiscard]] virtual std::unique_ptr<Session> create_session() const = 0;
-
-    Protocol() = default;
+    [[nodiscard]] virtual std::unique_ptr<Session> create_session(std::unique_ptr<Socket> socket) const = 0;
 };
+
 
 #endif //NEBLINA_PROTOCOL_HH
