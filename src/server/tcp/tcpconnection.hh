@@ -5,7 +5,7 @@
 
 class TCPConnection : public Connection {
 public:
-    using Connection::Connection;
+    explicit TCPConnection(SOCKET fd) : Connection(fd) {}
 
     [[nodiscard]] std::string recv() const override;
     void                      send(std::string const &data) const override;
