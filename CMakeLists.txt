@@ -77,7 +77,7 @@ add_executable(${PROJECT_NAME} main.cc ${SRC_FILES})
 # tests
 file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS tests/*.cc tests/doctest.h)
 add_executable(${PROJECT_NAME}-tests EXCLUDE_FROM_ALL ${TEST_FILES} ${SRC_FILES})
-add_executable(${PROJECT_NAME}-load-test EXCLUDE_FROM_ALL tests/doctest.h load-tests/loadtest.cc tests/echo/echo.hh tests/echo/echo.cc ${SRC_FILES})
+add_executable(${PROJECT_NAME}-load-test EXCLUDE_FROM_ALL tests/doctest.h load-tests/loadtest.cc ${SRC_FILES})
 
 # with sanitizers
 add_executable(${PROJECT_NAME}-tests-san-leaks EXCLUDE_FROM_ALL ${TEST_FILES} ${SRC_FILES})
