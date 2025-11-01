@@ -17,7 +17,7 @@ jobs:
       - name: Build & Test
         uses: vmactions/freebsd-vm@v1
         with:
-          prepare: pkg install -y cmake openssl lang/gcc8
+          prepare: pkg install -y cmake openssl gcc13
           copyback: false
           run: |
             pwd

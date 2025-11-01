@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: apt-get update && apt-get install -y libssl-dev valgrind && apt-get install --only-upgrade libstdc++6
+        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test && apt-get update && apt-get install -y libssl-dev valgrind libstdc++6
       - name: Configure CMake
         run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
       - name: Build executable
