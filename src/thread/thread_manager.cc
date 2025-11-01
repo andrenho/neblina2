@@ -11,3 +11,18 @@ ThreadManager::ThreadManager(ThreadCount thread_count)
         threads_.push_back(std::make_unique<ThreadSingle>());
     }
 }
+
+void ThreadManager::add_session(std::unique_ptr<Session> session)
+{
+    threads_.at(session->fd() % threads_.size())->add_session(std::move(session));
+}
+
+void ThreadManager::remove_session(SOCKET fd)
+{
+    threads_.at(fd % threads_.size())->remove_session(fd);
+}
+
+void ThreadManager::data_available(SOCKET fd)
+{
+    threads_.at(fd % threads_.size())->data_available(fd);
+}

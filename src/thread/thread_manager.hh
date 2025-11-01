@@ -14,6 +14,10 @@ class ThreadManager {
 public:
     explicit ThreadManager(ThreadCount thread_count);
 
+    void add_session(std::unique_ptr<Session> session);
+    void remove_session(SOCKET fd);
+    void data_available(SOCKET fd);
+
 private:
     std::vector<std::unique_ptr<Thread>> threads_;
 };

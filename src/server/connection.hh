@@ -7,6 +7,11 @@ class Connection {
 public:
     virtual ~Connection() { close_socket(fd_); }
 
+    [[nodiscard]] virtual std::string recv() const = 0;
+    virtual void                      send(std::string const &data) const = 0;
+
+    [[nodiscard]] SOCKET fd() const { return fd_; }
+
 protected:
     explicit Connection(SOCKET fd) : fd_(fd) {}
 
