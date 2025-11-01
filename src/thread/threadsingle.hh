@@ -12,9 +12,6 @@ public:
     void add_session(std::unique_ptr<Session> session) override;
     void remove_session(SOCKET fd) override;
     void data_available(SOCKET fd) override;
-
-private:
-    std::unordered_map<SOCKET, std::unique_ptr<Session>> sessions_;
 };
 
 

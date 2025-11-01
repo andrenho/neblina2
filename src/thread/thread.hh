@@ -2,6 +2,8 @@
 #define NEBLINA_THREAD_HH
 
 #include <memory>
+#include <unordered_map>
+
 #include "protocol/session.hh"
 
 class Thread {
@@ -15,6 +17,8 @@ public:
 
 protected:
     Thread() = default;
+
+    std::unordered_map<SOCKET, std::unique_ptr<Session>> sessions_;
 };
 
 #endif //NEBLINA_THREAD_HH
