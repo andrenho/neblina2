@@ -26,8 +26,9 @@ protected:
     [[nodiscard]] virtual std::unique_ptr<Connection> create_connection(SOCKET fd_) const = 0;
     [[nodiscard]] virtual SOCKET                      accept() const = 0;
 
-private:
     SOCKET                    fd_;
+
+private:
     Poller                    poller_;
     std::unique_ptr<Protocol> protocol_;
     ThreadManager             thread_manager_;

@@ -8,7 +8,7 @@
 
 class TCPServer : public Server {
 public:
-    TCPServer(uint16_t port, bool open_to_world, std::unique_ptr<Protocol> protocol, ThreadCount n_threads);
+    TCPServer(uint16_t port, bool open_to_world, std::unique_ptr<Protocol> protocol, ThreadCount thread_count);
     virtual ~TCPServer() { finalize(); }
 
 protected:
