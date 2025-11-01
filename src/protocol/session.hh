@@ -2,20 +2,24 @@
 #define NEBLINA_SESSION_HH
 
 #include <memory>
+#include <string>
 
-#include "util/socket.hh"
+#include "server/connection.hh"
 
 class Session {
 public:
-    explicit Session(std::unique_ptr<Socket> socket) : socket_(std::move(socket)) {}
     virtual ~Session() = default;
 
-    virtual std::string new_data(std::string const& data) = 0;
+    virtual void iteration();
 
-    [[nodiscard]] Socket const& socket() const { return *socket_; }
+    [[nodiscard]] SOCKET fd() const { return connection_->fd(); }
 
-private:
-    std::unique_ptr<Socket> socket_;
+protected:
+    explicit Session(std::unique_ptr<Connection> connection) : connection_(std::move(connection)) {}
+
+    virtual std::string process(std::string const& data) = 0;
+
+    std::unique_ptr<Connection> connection_;
 };
 
 #endif //NEBLINA_SESSION_HH

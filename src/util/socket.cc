@@ -1,13 +1,13 @@
 #include "socket.hh"
 
-#include <cstring>
-#include <string>
+#include <fcntl.h>
 
+#include <cstring>
 using namespace std::string_literals;
 
 #include "util/exceptions/non_recoverable_exception.hh"
 
-void Socket::mark_as_non_blocking()
+void socket_mark_as_nonblocking(SOCKET fd)
 {
 #ifdef _WIN32
     unsigned long mode = 1;

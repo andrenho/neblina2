@@ -14,7 +14,7 @@ protected:
     [[nodiscard]] std::string recv(size_t n_bytes) const override;
 
 private:
-    [[nodiscard]] std::unique_ptr<Socket> open_connection(std::string const& host, uint16_t port) const;
+    [[nodiscard]] SOCKET open_connection(std::string const& host, uint16_t port) const;
 };
 
 

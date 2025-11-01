@@ -1,48 +1,42 @@
 #ifndef NEBLINA_SERVER_HH
 #define NEBLINA_SERVER_HH
 
-#include <atomic>
-#include <limits>
-#include <memory>
-#include <variant>
-#include <vector>
-
-#include "protocol/protocol.hh"
-#include "util/socket.hh"
 #include "server/poller/poller.hh"
-#include "serverthread.hh"
-#include "isocketio.hh"
+#include "protocol/protocol.hh"
+#include "thread/thread_manager.hh"
+#include "connection.hh"
 
-enum class Thread { Single };
-using ThreadCount = std::variant<size_t, Thread>;
+#include <atomic>
+#include <memory>
 
-class Server : public ISocketIO {
+class Server {
 public:
-    virtual ~Server() { finalize(); }
+    virtual ~Server() { close_socket(fd_); }
 
     void iterate();
-    void run();
+    void run()  { while (running_.load()) iterate(); }
+    void stop() { running_.store(false); }
 
-    void finalize();
+    void stop_on_SIGINT();
 
     [[nodiscard]] bool running() { return running_.load(); }
 
 protected:
-    Server(std::unique_ptr<Protocol> protocol, std::unique_ptr<Socket>, ThreadCount n_threads);
+    explicit Server(SOCKET fd, std::unique_ptr<Protocol> protocol, ThreadCount thread_count)
+        : fd_(fd), poller_(fd), protocol_(std::move(protocol)), thread_manager_(thread_count) {}
 
-    [[nodiscard]] virtual std::unique_ptr<Socket> accept_new_connection() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<Connection> create_connection(SOCKET fd_) const = 0;
+    [[nodiscard]] virtual SOCKET                      accept() const = 0;
 
-    std::unique_ptr<Socket>   server_socket_;
+    SOCKET                    fd_;
 
 private:
-    void handle_new_client();
-    [[nodiscard]] size_t thread_hash(SOCKET fd) const;
+    Poller                    poller_;
+    std::unique_ptr<Protocol> protocol_;
+    ThreadManager             thread_manager_;
+    std::atomic<bool>         running_ = true;
 
-    Poller                                      poller_;
-    std::unique_ptr<Protocol>                   protocol_;
-    std::atomic<bool>                           running_ = true;
-    std::vector<std::unique_ptr<ServerThread>>  server_threads_;
+    static Server* global_server_;
 };
-
 
 #endif //NEBLINA_SERVER_HH

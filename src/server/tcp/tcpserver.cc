@@ -1,17 +1,14 @@
 #include "tcpserver.hh"
 
+#include <string>
 #include <cstring>
-#include <cerrno>
+
 using namespace std::string_literals;
 
 #include "util/exceptions/non_recoverable_exception.hh"
+#include "tcpconnection.hh"
 
-TCPServer::TCPServer(uint16_t port, bool open_to_world, std::unique_ptr<Protocol> protocol, ThreadCount n_threads)
-    : Server(std::move(protocol), std::make_unique<Socket>(create_listener(port, open_to_world)), n_threads)
-{
-}
-
-SOCKET TCPServer::create_listener(uint16_t port, bool open_to_world)
+SOCKET TCPServer::create_listener(uint16_t port, bool open_to_world) const
 {
     SOCKET listener = INVALID_SOCKET;
 
@@ -66,13 +63,13 @@ SOCKET TCPServer::create_listener(uint16_t port, bool open_to_world)
     return listener;
 }
 
-std::unique_ptr<Socket> TCPServer::accept_new_connection() const
+SOCKET TCPServer::accept() const
 {
     // accept connection
     struct sockaddr_storage remoteaddr {};
     socklen_t addrlen = sizeof remoteaddr;
 
-    SOCKET client_fd = accept(server_socket_->fd, (struct sockaddr *) &remoteaddr, &addrlen);
+    SOCKET client_fd = ::accept(fd_, (struct sockaddr *) &remoteaddr, &addrlen);
     if (client_fd == INVALID_SOCKET)
         throw NonRecoverableException("listen error: "s + strerror(errno));
 
@@ -83,48 +80,12 @@ std::unique_ptr<Socket> TCPServer::accept_new_connection() const
         DBG("New connection from {}:{} as fd {}", hoststr, portstr, client_fd);
 
     // mark socket as non-blocking
-    auto socket = std::make_unique<Socket>(client_fd);
-    socket->mark_as_non_blocking();
-
-    return socket;
+    socket_mark_as_nonblocking(client_fd);
+    return client_fd;
 }
 
-std::string TCPServer::recv(SOCKET fd) const
+std::unique_ptr<Connection> TCPServer::create_connection(SOCKET fd_) const
 {
-    static constexpr size_t RECV_BUF_SZ = 16 * 1024;
-    std::string buf(RECV_BUF_SZ, 0);
-    ssize_t r = ::recv(fd, buf.data(), RECV_BUF_SZ, 0);
-#ifdef _WIN32
-    if (r == SOCKET_ERROR) {
-        int err = WSAGetLastError();
-        if (err == WSAEWOULDBLOCK) {
-            return "";
-        }
-        else {
-            throw std::runtime_error("recv error: " + std::to_string(err));
-        }
-    }
-#endif
-    if (r < 0) {
-        if (errno == EAGAIN)
-            return "";
-        else
-            throw std::runtime_error("recv error: "s + strerror(errno));
-    } else if (r == 0) {
-        return "";
-    } else {
-        buf.resize(r);
-        return buf;
-    }
+    return std::make_unique<TCPConnection>(fd_);
 }
 
-void TCPServer::send(SOCKET fd, std::string const& data) const
-{
-    size_t pos = 0;
-    while (pos < data.size()) {
-        ssize_t r = ::send(fd, data.data(), data.size(), 0);
-        if (r < 0)
-            throw std::runtime_error("send error: "s + strerror(errno));
-        pos += r;
-    }
-}
