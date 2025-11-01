@@ -17,6 +17,8 @@ public:
     void run()  { while (running_.load()) iterate(); }
     void stop() { running_.store(false); }
 
+    void stop_on_SIGINT();
+
     [[nodiscard]] bool running() { return running_.load(); }
 
 protected:
@@ -33,6 +35,8 @@ private:
     std::unique_ptr<Protocol> protocol_;
     ThreadManager             thread_manager_;
     std::atomic<bool>         running_ = true;
+
+    static Server* global_server_;
 };
 
 #endif //NEBLINA_SERVER_HH

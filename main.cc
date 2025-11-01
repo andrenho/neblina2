@@ -20,5 +20,6 @@ public:
 int main()
 {
     TCPServer server(23456, false, std::make_unique<EchoProtocol>(), Threads::Single);
+    server.stop_on_SIGINT();
     server.run();
 }
