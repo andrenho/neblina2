@@ -13,7 +13,7 @@ using namespace std::chrono_literals;
 
 class Client {
 public:
-    virtual ~Client() = default;
+    virtual ~Client() { close_socket(fd_); }
 
     virtual void send(std::string const& data) const = 0;
 
@@ -21,11 +21,11 @@ public:
     [[nodiscard]] std::future<std::string> recv_future(std::chrono::milliseconds timeout=30s) const;
 
 protected:
-    explicit Client(std::unique_ptr<Socket> socket) : socket_(std::move(socket)) {}
+    explicit Client(SOCKET fd) : fd_(fd) {}
 
     [[nodiscard]] virtual std::string recv(size_t n_bytes) const = 0;
 
-    std::unique_ptr<Socket> socket_;
+    SOCKET fd_;
 };
 
 

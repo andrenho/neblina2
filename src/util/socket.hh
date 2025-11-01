@@ -40,4 +40,6 @@ typedef struct sockaddr SOCKADDR;
 
 #endif
 
+void socket_mark_as_nonblocking(SOCKET fd);
+
 #endif //NEBLINA_SOCKET_HH

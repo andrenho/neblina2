@@ -22,7 +22,7 @@ static void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-std::unique_ptr<Socket> TCPClient::open_connection(std::string const& host, uint16_t port) const
+SOCKET TCPClient::open_connection(std::string const& host, uint16_t port) const
 {
     addrinfo hints {};
     hints.ai_family = AF_UNSPEC;
@@ -62,16 +62,15 @@ std::unique_ptr<Socket> TCPClient::open_connection(std::string const& host, uint
 
     freeaddrinfo(servinfo);
 
-    auto socket = std::make_unique<Socket>(sockfd);
-    socket->mark_as_non_blocking();
-    return socket;
+    socket_mark_as_nonblocking(sockfd);
+    return sockfd;
 }
 
 void TCPClient::send(std::string const& data) const
 {
     size_t pos = 0;
     while (pos < data.size()) {
-        ssize_t r = ::send(socket_->fd, data.data(), data.size(), 0);
+        ssize_t r = ::send(fd_, data.data(), data.size(), 0);
         if (r < 0)
             throw std::runtime_error("send error: "s + strerror(errno));
         pos += r;
@@ -81,7 +80,7 @@ void TCPClient::send(std::string const& data) const
 std::string TCPClient::recv(size_t n_bytes) const
 {
     std::string buf(n_bytes, 0);
-    ssize_t r = ::recv(socket_->fd, buf.data(), n_bytes, 0);
+    ssize_t r = ::recv(fd_, buf.data(), n_bytes, 0);
 #ifdef _WIN32
     if (r == SOCKET_ERROR) {
         int err = WSAGetLastError();
