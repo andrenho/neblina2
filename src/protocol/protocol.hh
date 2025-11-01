@@ -9,9 +9,9 @@ class Protocol {
 public:
     virtual ~Protocol() = default;
 
-protected:
-    [[nodiscard]] virtual std::unique_ptr<Session> create_session() const = 0;
+    [[nodiscard]] virtual std::unique_ptr<Session> create_session(std::unique_ptr<Connection> connection) const = 0;
 
+protected:
     Protocol() = default;
 };
 
