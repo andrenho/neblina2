@@ -2,9 +2,9 @@
 
 class EchoProtocol : public Protocol {
 public:
-    class Session : public ::Session {
+    class Session : public LineSession {
     public:
-        explicit Session(std::unique_ptr<Connection> connection) : ::Session(std::move(connection)) {}
+        explicit Session(std::unique_ptr<Connection> connection) : LineSession(std::move(connection)) {}
 
     protected:
         std::string process(std::string const &data) override {

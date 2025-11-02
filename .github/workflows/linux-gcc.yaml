@@ -13,7 +13,7 @@ jobs:
     timeout-minutes: 15
 
     container:
-      image: ghcr.io/mattkretz/cplusplus-ci/gcc16
+      image: ghcr.io/mattkretz/cplusplus-ci/gcc15
 
     steps:
       - uses: actions/checkout@v4
