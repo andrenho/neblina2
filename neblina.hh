@@ -3,5 +3,6 @@
 
 #include "server/tcp/tcpserver.hh"
 #include "client/tcpclient.hh"
+#include "protocol/linesession.hh"
 
 #endif //NEBLINA_NEBLINA_HH

@@ -2,8 +2,6 @@
 
 #include <csignal>
 
-Server* Server::global_server_ = nullptr;
-
 void Server::iterate()
 {
     for (Poller::Event const& event: poller_.wait()) {
@@ -28,11 +26,11 @@ void Server::iterate()
 
 void Server::stop_on_SIGINT()
 {
-    Server::global_server_ = this;
+    static Server* global_server = this;
     signal(SIGINT, [](int) {
-        if (Server::global_server_) {
+        if (global_server) {
             printf("CTRL+C detected - finalizing server...\n");
-            Server::global_server_->stop();
+            global_server->stop();
         }
     });
 }

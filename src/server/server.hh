@@ -35,8 +35,6 @@ private:
     std::unique_ptr<Protocol> protocol_;
     ThreadManager             thread_manager_;
     std::atomic<bool>         running_ = true;
-
-    static Server* global_server_;
 };
 
 #endif //NEBLINA_SERVER_HH

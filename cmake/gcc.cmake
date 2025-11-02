@@ -5,5 +5,5 @@ set(SPECIFIC_WARNINGS "-Wduplicated-branches -Wduplicated-cond -Wformat-signedne
     -Wsuggest-attribute=format -Wsuggest-attribute=cold -Wsuggest-attribute=returns_nonnull")
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fanalyzer")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fanalyzer")
 endif()

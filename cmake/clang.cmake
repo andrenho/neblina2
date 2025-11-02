@@ -6,3 +6,5 @@ set(SPECIFIC_WARNINGS "-Warray-bounds-pointer-arithmetic -Wassign-enum -Wcast-fu
     -Wthread-safety -Wunreachable-code -Wunreachable-code-aggressive -Wunused-macros \
     -Wused-but-marked-unused -Wvariadic-macros -Wzero-as-null-pointer-constant \
     -Wno-strict-prototypes -Wno-newline-eof -Wno-unknown-warning-option")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexperimental-library")

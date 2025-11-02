@@ -13,12 +13,17 @@ jobs:
     timeout-minutes: 15
 
     container:
-      image: ghcr.io/mattkretz/cplusplus-ci/gcc16
+      image: ghcr.io/mattkretz/cplusplus-ci/gcc15
 
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: apt-get install -y libssl-dev valgrind
+        run: |
+          add-apt-repository ppa:ubuntu-toolchain-r/test
+          apt-get update
+          apt-get install -y libssl-dev valgrind
+          apt-get install --only-upgrade -y libstdc++6
+          strings /usr/lib/x86_64-linux-gnu/libstdc++.so.6 | grep GLIBCXX
       - name: Configure CMake
         run: mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug ..
       - name: Build executable
@@ -26,7 +31,10 @@ jobs:
         run: make neblina
       - name: Build and run tests
         working-directory: ./build
-        run: make neblina-tests && ./neblina-tests
+        run: |
+          export LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH
+          make neblina-tests
+          ./neblina-tests
       #- name: Load test
       #  working-directory: ./build
       #  run: make neblina-load-test && ./neblina-load-test

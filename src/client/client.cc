@@ -6,7 +6,7 @@ using sc = std::chrono::steady_clock;
 
 std::optional<std::string> Client::recv_spinlock(size_t n_bytes, std::chrono::milliseconds timeout) const
 {
-    std::string buffer;
+    std::string buffer {};
 
     auto start = sc::now();
     while (sc::now() < (start + timeout)) {
