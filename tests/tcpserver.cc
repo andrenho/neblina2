@@ -27,7 +27,7 @@ public:
 
 TEST_SUITE("TCP Server")
 {
-    TEST_CASE("Single-threaded server and client")
+    TEST_CASE("TCP: Single-threaded server and client")
     {
         logging_verbose = true;
         logging_dest = stderr;
@@ -50,7 +50,7 @@ TEST_SUITE("TCP Server")
         CHECK(response == "hellw\r\n");
     }
 
-    TEST_CASE("Multi-threaded server and single-threaded client")
+    TEST_CASE("TCP: Multi-threaded server and single-threaded client")
     {
         logging_verbose = true;
         logging_dest = stderr;

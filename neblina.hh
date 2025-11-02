@@ -4,6 +4,7 @@
 #include "server/tcp/tcpserver.hh"
 #include "server/ssl/sslserver.hh"
 #include "client/tcpclient.hh"
+#include "client/sslclient.hh"
 #include "protocol/linesession.hh"
 
 #endif //NEBLINA_NEBLINA_HH
