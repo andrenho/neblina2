@@ -12,7 +12,7 @@ void LineSession::iteration()
     for (;;) {
         i = buffer_.find(separator_, i);
         if (i != std::string::npos) {
-            response += process(buffer_.substr(0, i + separator_len_));
+            response += process(buffer_.substr(0, i + (include_separator_ ? separator_len_ : 0)));
             buffer_ = buffer_.erase(0, i + separator_len_);
         } else {
             break;

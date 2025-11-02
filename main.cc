@@ -4,11 +4,11 @@ class EchoProtocol : public Protocol {
 public:
     class Session : public LineSession {
     public:
-        explicit Session(std::unique_ptr<Connection> connection) : LineSession(std::move(connection)) {}
+        explicit Session(std::unique_ptr<Connection> connection) : LineSession(std::move(connection), false) {}
 
     protected:
         std::string process(std::string const &data) override {
-            return data;
+            return "|" + data + "|\r\n";
         }
     };
 

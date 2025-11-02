@@ -5,7 +5,7 @@
 
 class LineSession : public Session {
 protected:
-    explicit LineSession(std::unique_ptr<Connection> connection, std::string const& separator="\r\n", bool include_separator=true)
+    explicit LineSession(std::unique_ptr<Connection> connection, bool include_separator=true, std::string const& separator="\r\n")
         : Session(std::move(connection)), separator_(separator), separator_len_(separator.length()), include_separator_(include_separator) {}
 
     void iteration() override;
