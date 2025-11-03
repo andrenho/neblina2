@@ -26,8 +26,9 @@ endif()
 
 if(NOT WIN32)
     find_package(Threads)
-    find_package(OpenSSL COMPONENTS SSL REQUIRED)
 endif ()
+find_package(OpenSSL COMPONENTS SSL REQUIRED)
+
 
 #-------------------------
 # Compiler specific code
@@ -102,9 +103,11 @@ include(cmake/special-targets.cmake)
 
 # add common things to all final targets
 foreach (TARGET ${FINAL_TARGETS})
+    target_link_libraries(${TARGET} PRIVATE OpenSSL::SSL)
+
     if (NOT MSVC)
         # add POSIX libraries
-        target_link_libraries(${TARGET} PRIVATE Threads::Threads OpenSSL::SSL)
+        target_link_libraries(${TARGET} PRIVATE Threads::Threads)
 
         # strip executable
         if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
