@@ -17,7 +17,11 @@ jobs:
       - uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: x64
-      - name: Install OpenSSL
-        run: powershell.exe ./.github/workflows/Install-OpenSSL.ps1
+      - name: Install OpenSSL (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
+          vcpkg install openssl:x64-windows-static-md
       - name: Run tests
         run: mkdir build && cd build && cmake .. && msbuild neblina.sln /t:neblina,neblina-tests && cd Debug && dir && .\neblina-tests.exe
