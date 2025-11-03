@@ -47,13 +47,13 @@ TEST_SUITE("SSL Server")
 
         std::jthread t([](std::stop_token const& st) {
             SSLServer server(PORT, false, std::make_unique<EchoProtocol>(), 2, certificate_key, private_key);
-            std::this_thread::sleep_for(50ms);
+            std::this_thread::sleep_for(150ms);
             while (!st.stop_requested()) {
                 server.iterate();
             }
         });
 
-        std::this_thread::sleep_for(200ms);
+        std::this_thread::sleep_for(300ms);
 
         SSLClient client1("127.0.0.1", PORT);
         SSLClient client2("127.0.0.1", PORT);

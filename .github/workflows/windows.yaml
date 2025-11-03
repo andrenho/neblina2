@@ -17,5 +17,7 @@ jobs:
       - uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
           arch: x64
+      - name: Install OpenSSL
+        run: powershell.exe ./.github/workflows/Install-OpenSSL.ps1
       - name: Run tests
         run: mkdir build && cd build && cmake .. && msbuild neblina.sln /t:neblina,neblina-tests && cd Debug && dir && .\neblina-tests.exe
