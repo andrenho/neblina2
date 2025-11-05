@@ -8,6 +8,8 @@
 #include <sys/resource.h>
 #endif
 
+#include <openssl/ssl.h>
+
 #include "src/util/socket.hh"
 #include "util/exceptions/non_recoverable_exception.hh"
 
@@ -42,6 +44,9 @@ Init::Init()
             LOG("Could not set file limit: {}", strerror(errno));
     }
 #endif
+
+    // initialize OpenSSL
+    OPENSSL_init_ssl(0, nullptr);
 }
 
 Init::~Init()

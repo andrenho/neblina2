@@ -26,8 +26,9 @@ endif()
 
 if(NOT WIN32)
     find_package(Threads)
-    find_package(OpenSSL COMPONENTS SSL REQUIRED)
 endif ()
+find_package(OpenSSL COMPONENTS SSL REQUIRED)
+
 
 #-------------------------
 # Compiler specific code
@@ -73,6 +74,8 @@ set(SRC_FILES "${SRC_FILES};${ADDITIONAL_FILES}")
 
 # main executable
 add_executable(${PROJECT_NAME} main.cc ${SRC_FILES})
+add_executable(${PROJECT_NAME}-echo EXCLUDE_FROM_ALL demo/echo.cc ${SRC_FILES})
+add_executable(${PROJECT_NAME}-echossl EXCLUDE_FROM_ALL demo/echossl.cc ${SRC_FILES})
 
 # tests
 file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS tests/*.cc tests/doctest.h)
@@ -95,14 +98,16 @@ target_link_options(${PROJECT_NAME}-tests-san-threads PRIVATE -fsanitize=thread 
 #add_dependencies(${PROJECT_NAME}-tests tests-infloop tests-error tests-nonrecoverable)
 
 # add special targets
-set(FINAL_TARGETS ${PROJECT_NAME} ${PROJECT_NAME}-tests)
+set(FINAL_TARGETS ${PROJECT_NAME} ${PROJECT_NAME}-tests ${PROJECT_NAME}-echo ${PROJECT_NAME}-echossl)
 include(cmake/special-targets.cmake)
 
 # add common things to all final targets
 foreach (TARGET ${FINAL_TARGETS})
+    target_link_libraries(${TARGET} PRIVATE OpenSSL::SSL)
+
     if (NOT MSVC)
         # add POSIX libraries
-        target_link_libraries(${TARGET} PRIVATE Threads::Threads OpenSSL::SSL)
+        target_link_libraries(${TARGET} PRIVATE Threads::Threads)
 
         # strip executable
         if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
