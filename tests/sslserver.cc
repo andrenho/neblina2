@@ -47,7 +47,7 @@ TEST_SUITE("SSL Server")
 
         std::jthread t([](std::stop_token const& st) {
             SSLServer server(PORT, false, std::make_unique<EchoProtocol>(), 2, certificate_key, private_key);
-            std::this_thread::sleep_for(150ms);
+            std::this_thread::sleep_for(50ms);
             while (!st.stop_requested()) {
                 server.iterate();
             }
@@ -62,7 +62,7 @@ TEST_SUITE("SSL Server")
         client1.send("hello\r\n");
         client2.send("hellw\r\n");
         client3.send("helly\r\n");
-        std::this_thread::sleep_for(100ms);
+        std::this_thread::sleep_for(200ms);
 
         std::string response = client1.recv_spinlock(7, 1000ms).value_or("");
         CHECK(response == "hello\r\n");
