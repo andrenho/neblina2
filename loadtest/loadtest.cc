@@ -28,7 +28,6 @@ static void show_help()
     fprintf(stderr, "  -s, --ssl       Use SSL client\n");
     fprintf(stderr, "  -a, --attempts  Number of attempts (default 1)\n");
     fprintf(stderr, "  -n, --threads   Number of threads  (default 1)\n");
-    fprintf(stderr, "Server must be running.\n");
     exit(EXIT_FAILURE);
 }
 
@@ -172,8 +171,10 @@ int main(int argc, char* argv[])
     printf("Out of %zu request: %zu succeeded, %zu timed out, %zu returned an incorrect result.\n", results.size(),
            success, timeout, incorrect);
     if (success > 0) {
-        printf("For the succeeded, average time was %zu ms. Best time was %zu ms, and worst time was %zu ms.\n",
-               (total_time / success).count(),
+        printf("For the succeeded, average time was %0.2f ms. Best time was %0.2f ms, and worst time was %0.2f ms.\n",
+               std::chrono::duration_cast<std::chrono::microseconds>(total_time / success).count() / 1000.0,
+               std::chrono::duration_cast<std::chrono::microseconds>(best_time).count() / 1000.0,
+               std::chrono::duration_cast<std::chrono::microseconds>(worst_time).count() / 1000.0
         );
     }
 }

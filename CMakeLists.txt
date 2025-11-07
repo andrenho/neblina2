@@ -80,7 +80,9 @@ add_executable(${PROJECT_NAME}-echossl EXCLUDE_FROM_ALL demo/echossl.cc ${SRC_FI
 # tests
 file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS tests/*.cc tests/doctest.h)
 add_executable(${PROJECT_NAME}-tests EXCLUDE_FROM_ALL ${TEST_FILES} ${SRC_FILES})
+add_executable(${PROJECT_NAME}-load-test-server EXCLUDE_FROM_ALL loadtest/server.cc ${SRC_FILES})
 add_executable(${PROJECT_NAME}-load-test EXCLUDE_FROM_ALL loadtest/loadtest.cc ${SRC_FILES})
+add_dependencies(${PROJECT_NAME}-load-test ${PROJECT_NAME}-load-test-server)
 
 # with sanitizers
 add_executable(${PROJECT_NAME}-tests-san-leaks EXCLUDE_FROM_ALL ${TEST_FILES} ${SRC_FILES})
@@ -98,7 +100,7 @@ target_link_options(${PROJECT_NAME}-tests-san-threads PRIVATE -fsanitize=thread 
 #add_dependencies(${PROJECT_NAME}-tests tests-infloop tests-error tests-nonrecoverable)
 
 # add special targets
-set(FINAL_TARGETS ${PROJECT_NAME} ${PROJECT_NAME}-tests ${PROJECT_NAME}-echo ${PROJECT_NAME}-echossl ${PROJECT_NAME}-load-test)
+set(FINAL_TARGETS ${PROJECT_NAME} ${PROJECT_NAME}-tests ${PROJECT_NAME}-echo ${PROJECT_NAME}-echossl ${PROJECT_NAME}-load-test ${PROJECT_NAME}-load-test-server)
 include(cmake/special-targets.cmake)
 
 # add common things to all final targets
