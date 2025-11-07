@@ -93,7 +93,7 @@ Config parse_args(int argc, char** argv)
 using sc = std::chrono::steady_clock;
 
 struct Result {
-    enum Output { Success, Timeout, Incorrect };
+    enum Output { Success, Timeout, Incorrect, FailedToConnect };
 
     decltype(sc::now() - sc::now()) duration;
     Output                          output;
@@ -129,14 +129,24 @@ int main(int argc, char* argv[])
         t[i] = std::jthread([&]{
             for (size_t j = 0; j < config.n_attempts; ++j) {
                 std::string str = random_string(10) + "\n";
+                std::string response;
+                Result result;
                 auto start = sc::now();
-                std::unique_ptr<Client> client = create_client(config);
+                std::unique_ptr<Client> client;
+
+                try {
+                    client = create_client(config);
+                } catch (std::exception& e) {
+                    result.output = Result::FailedToConnect;
+                    goto skip;
+                }
                 client->send(str);
-                std::string response = client->recv_spinlock(11, 30000ms).value_or("");
-                Result result = {
+                response = client->recv_spinlock(11, 30000ms).value_or("");
+                result = {
                     .duration = sc::now() - start,
                     .output = (response == str) ? Result::Success : (response.empty() ? Result::Timeout : Result::Incorrect),
                 };
+skip:
                 {
                     std::lock_guard lock(mutex);
                     results.emplace_back(result);
@@ -149,7 +159,7 @@ int main(int argc, char* argv[])
 
     // report
     using duration = decltype(results[0].duration);
-    size_t success = 0, timeout = 0, incorrect = 0;
+    size_t success = 0, timeout = 0, incorrect = 0, failed_to_connect = 0;
     duration total_time = 0ms;
     duration best_time = 60000ms;
     duration worst_time = 0ms;
@@ -166,10 +176,12 @@ int main(int argc, char* argv[])
             ++timeout;
         if (result.output == Result::Incorrect)
             ++incorrect;
+        if (result.output == Result::FailedToConnect)
+            ++failed_to_connect;
     }
 
-    printf("Out of %zu request: %zu succeeded, %zu timed out, %zu returned an incorrect result.\n", results.size(),
-           success, timeout, incorrect);
+    printf("Out of %zu request: %zu succeeded, %zu timed out, %zu returned an incorrect result, and %zu failed to connect.\n",
+           results.size(), success, timeout, incorrect, failed_to_connect);
     if (success > 0) {
         printf("For the succeeded, average time was %0.2f ms. Best time was %0.2f ms, and worst time was %0.2f ms.\n",
                std::chrono::duration_cast<std::chrono::microseconds>(total_time / success).count() / 1000.0,
