@@ -3,7 +3,11 @@
 - [x] Initial setup
 - [x] TCP server
 - [x] TCP client
-- [ ] SSL server/client
+- [x] SSL server/client
+- [ ] Load test
+  - Fix SSL client threads
+  - Server - print error on connection rejected
+  - Start server from client
 - [ ] HTTP structs
 - [ ] HTTP server and request handlers
     - [ ] Default 404

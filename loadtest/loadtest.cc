@@ -45,7 +45,12 @@ Config parse_args(int argc, char** argv)
     };
 
     int opt;
-    while ((opt = getopt_long(argc, argv, "ts:a:n:h", long_opts, nullptr)) != -1) {
+    int opt_idx;
+    while (true) {
+        opt = getopt_long(argc, argv, "ts:a:n:h", long_opts, &opt_idx);
+        if (opt == -1)
+            break;
+
         switch (opt) {
             case 't':
                 if (cfg.client_type != ClientType::None) {
@@ -69,6 +74,9 @@ Config parse_args(int argc, char** argv)
 
             case 'n':
                 cfg.n_threads = strtoull(optarg, nullptr, 10);
+                break;
+
+            case '?':
                 break;
 
             case 'h':
@@ -180,13 +188,15 @@ skip:
             ++failed_to_connect;
     }
 
-    printf("Out of %zu request: %zu succeeded, %zu timed out, %zu returned an incorrect result, and %zu failed to connect.\n",
+    printf("Out of %zu requests: %zu succeeded, %zu timed out, %zu returned an incorrect result, and %zu failed to connect.\n",
            results.size(), success, timeout, incorrect, failed_to_connect);
     if (success > 0) {
-        printf("For the succeeded, average time was %0.2f ms. Best time was %0.2f ms, and worst time was %0.2f ms.\n",
+        printf("For the succeeded tests, average time was %0.2f ms. Best time was %0.2f ms, and worst time was %0.2f ms.\n",
                std::chrono::duration_cast<std::chrono::microseconds>(total_time / success).count() / 1000.0,
                std::chrono::duration_cast<std::chrono::microseconds>(best_time).count() / 1000.0,
                std::chrono::duration_cast<std::chrono::microseconds>(worst_time).count() / 1000.0
         );
     }
+
+    return (timeout + incorrect + failed_to_connect) > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }
