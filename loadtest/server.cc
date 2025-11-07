@@ -43,7 +43,7 @@ int main(int argc, char* argv[])
 
     if (argc != 2)
         show_help();
-    else if (std::string(argv[1]) == "-t" || std::string(argv[1]) == "-c")
+    else if (std::string(argv[1]) == "-t" || std::string(argv[1]) == "-s")
         server_type = argv[1][1];
     else
         show_help();
