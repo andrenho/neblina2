@@ -55,7 +55,7 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
         src/*.cc src/*.hh)
 
 if(WIN32)
-    file(GLOB_RECURSE ADDITIONAL_FILES CONFIGURE_DEPENDS *.win32.cpp)
+    file(GLOB_RECURSE ADDITIONAL_FILES CONFIGURE_DEPENDS *.win32.cpp contrib/ya_getopt/yagetopt.[ch])
 elseif(APPLE)
     file(GLOB_RECURSE ADDITIONAL_FILES CONFIGURE_DEPENDS *.posix.cpp *.bsd.cpp)
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
