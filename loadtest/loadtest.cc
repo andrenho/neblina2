@@ -47,7 +47,7 @@ Config parse_args(int argc, char** argv)
     int opt;
     int opt_idx;
     while (true) {
-        opt = getopt_long(argc, argv, "ts:a:n:h", long_opts, &opt_idx);
+        opt = getopt_long(argc, argv, "tsa:n:h", long_opts, &opt_idx);
         if (opt == -1)
             break;
 

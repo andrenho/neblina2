@@ -17,11 +17,7 @@ static int err(char const* str, size_t len, void*)
 SSLClient::SSLClient(std::string const &host, uint16_t port)
     : TCPClient(host, port)
 {
-    if (!ctx_) {
-        ctx_ = { SSL_CTX_new(TLS_client_method()), [](SSL_CTX* ctx) { SSL_CTX_free(ctx); } };
-        if (!SSL_CTX_set_default_verify_paths(ctx_.get()))
-            throw NonRecoverableException("Failed to load system CA store");
-    }
+    initialize_ctx();
 
     ssl_ = SSL_new(ctx_.get());
     SSL_set_tlsext_host_name(ssl_, host.c_str());
@@ -40,6 +36,18 @@ SSLClient::~SSLClient()
 {
     if (ssl_)
         SSL_free(ssl_);
+}
+
+void SSLClient::initialize_ctx()
+{
+    static std::mutex mutex;
+
+    std::lock_guard lock(mutex);
+    if (!ctx_) {
+        ctx_ = { SSL_CTX_new(TLS_client_method()), [](SSL_CTX* ctx) { SSL_CTX_free(ctx); } };
+        if (!SSL_CTX_set_default_verify_paths(ctx_.get()))
+            throw NonRecoverableException("Failed to load system CA store");
+    }
 }
 
 void SSLClient::send(std::string const &data) const
