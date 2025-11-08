@@ -24,3 +24,12 @@ jobs:
       - name: Run tests
         working-directory: ./build
         run: ./neblina-tests
+      - name: Load test
+        continue-on-error: true
+        run: |
+          mkdir build-release
+          cd build-release
+          cmake ..
+          make -j8 neblina-load-test
+          ./neblina-load-test -t -a 2000 -n 8 -r
+          ./neblina-load-test -s -a 100 -n 8 -r

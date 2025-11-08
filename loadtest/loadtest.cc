@@ -8,6 +8,14 @@
 #include <string>
 #include <thread>
 #include <vector>
+#include <csignal>
+
+#ifndef _WIN32
+#  include <unistd.h>
+#  include <sys/wait.h>
+#else
+#  include <windows.h>
+#endif
 
 //------------------------------------------------------
 // PARSE OPTIONS
@@ -19,15 +27,17 @@ struct Config {
     ClientType client_type = ClientType::None;
     size_t n_attempts = 1;
     size_t n_threads  = 1;
+    bool   run_server = false;
 };
 
 static void show_help()
 {
-    fprintf(stderr, "Usage: neblina-load-test [--tcp|--ssl] [--attempts N] [--threads N]\n");
-    fprintf(stderr, "  -t, --tcp       Use TCP client\n");
-    fprintf(stderr, "  -s, --ssl       Use SSL client\n");
-    fprintf(stderr, "  -a, --attempts  Number of attempts (default 1)\n");
-    fprintf(stderr, "  -n, --threads   Number of threads  (default 1)\n");
+    fprintf(stderr, "Usage: neblina-load-test [--tcp|--ssl] [--attempts N] [--threads N] [--run-server]\n");
+    fprintf(stderr, "  -t, --tcp          Use TCP client\n");
+    fprintf(stderr, "  -s, --ssl          Use SSL client\n");
+    fprintf(stderr, "  -a, --attempts     Number of attempts (default 1)\n");
+    fprintf(stderr, "  -n, --threads      Number of threads  (default 1)\n");
+    fprintf(stderr, "  -r, --run-server   Execute server\n");
     exit(EXIT_FAILURE);
 }
 
@@ -36,18 +46,19 @@ Config parse_args(int argc, char** argv)
     Config cfg {};
 
     const option long_opts[] = {
-            {"tcp",      no_argument,       nullptr, 't'},
-            {"ssl",      no_argument,       nullptr, 's'},
-            {"attempts", required_argument, nullptr, 'a'},
-            {"threads",  required_argument, nullptr, 'n'},
-            {"help",     no_argument,       nullptr, 'h'},
-            {nullptr,    0,                 nullptr, 0}
+            {"tcp",        no_argument,       nullptr, 't'},
+            {"ssl",        no_argument,       nullptr, 's'},
+            {"attempts",   required_argument, nullptr, 'a'},
+            {"threads",    required_argument, nullptr, 'n'},
+            {"run-server", required_argument, nullptr, 'r'},
+            {"help",       no_argument,       nullptr, 'h'},
+            {nullptr,      0,                 nullptr, 0}
     };
 
     int opt;
     int opt_idx;
     while (true) {
-        opt = getopt_long(argc, argv, "tsa:n:h", long_opts, &opt_idx);
+        opt = getopt_long(argc, argv, "tsa:n:rh", long_opts, &opt_idx);
         if (opt == -1)
             break;
 
@@ -76,6 +87,10 @@ Config parse_args(int argc, char** argv)
                 cfg.n_threads = strtoull(optarg, nullptr, 10);
                 break;
 
+            case 'r':
+                cfg.run_server = true;
+                break;
+
             case '?':
                 break;
 
@@ -93,6 +108,90 @@ Config parse_args(int argc, char** argv)
 
     return cfg;
 }
+
+//---------------------------
+// RUN SERVER
+//---------------------------
+
+#ifndef _WIN32
+
+pid_t run_server(ClientType type)
+{
+    pid_t pid = fork();
+    if (pid == 0) {  // server
+        execlp("./neblina-load-test-server", "./neblina-load-test-server", type == ClientType::TCP ? "-t" : "-s", nullptr);
+        perror("execlp");
+        _exit(127);
+    } else {
+        std::this_thread::sleep_for(300ms);
+    }
+    return pid;
+}
+
+void kill_server(pid_t pid)
+{
+    kill(pid, SIGTERM);
+
+    int status;
+    waitpid(pid, &status, 0);
+}
+
+#else
+
+using pid_t = PROCESS_INFORMATION;
+
+pid_t run_server(ClientType type)
+{
+    STARTUPINFOA si{};
+    PROCESS_INFORMATION pi{};
+    si.cb = sizeof(si);
+
+    std::string cmd = "./neblina-load-test-server ";
+    cmd += (type == ClientType::TCP) ? "-t" : "-s";
+
+    if (!CreateProcessA(
+            NULL,
+            cmd.data(),          // command line
+            NULL, NULL,
+            FALSE,
+            0,
+            NULL, NULL,
+            &si,
+            &pi))
+    {
+        throw std::runtime_error("Failed to start server");
+    }
+
+    // Server started; give it time to initialize.
+    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+
+    return pi; // caller must close handles
+}
+
+void kill_server(pid_t h)
+{
+    // Try to send a graceful CTRL-C first (only works if server is a console process
+    // in same console group; if not, fallback to TerminateProcess).
+    // Equivalent to SIGTERM intent.
+    BOOL sent = GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT, h.dwProcessId);
+
+    // Give process a chance to exit gracefully
+    if (sent) {
+        if (WaitForSingleObject(h.hProcess, 3000) == WAIT_OBJECT_0)
+            goto cleanup;
+    }
+
+    // Force kill (SIGKILL equivalent)
+    TerminateProcess(h.hProcess, 1);
+
+    WaitForSingleObject(h.hProcess, INFINITE);
+
+cleanup:
+    CloseHandle(h.hProcess);
+    CloseHandle(h.hThread);
+}
+
+#endif
 
 //---------------------------
 // RUN LOAD TEST
@@ -131,6 +230,10 @@ int main(int argc, char* argv[])
     Config config = parse_args(argc, argv);
     std::vector<Result> results;
     std::mutex mutex;
+
+    pid_t server_pid;
+    if (config.run_server)
+        server_pid = run_server(config.client_type);
 
     std::jthread t[config.n_threads];
     for (size_t i = 0; i < config.n_threads; ++i) {
@@ -197,6 +300,8 @@ skip:
                std::chrono::duration_cast<std::chrono::microseconds>(worst_time).count() / 1000.0
         );
     }
+
+    kill_server(server_pid);
 
     return (timeout + incorrect + failed_to_connect) > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }

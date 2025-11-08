@@ -5,9 +5,10 @@
 - [x] TCP client
 - [x] SSL server/client
 - [ ] Load test
-  - Fix SSL client threads
-  - Server - print error on connection rejected
-  - Start server from client
+  - [x] Fix SSL client threads
+  - [ ] Start server from client
+    - [ ] On Windows too
+  - [ ] Run from pipeline
 - [ ] HTTP structs
 - [ ] HTTP server and request handlers
     - [ ] Default 404
