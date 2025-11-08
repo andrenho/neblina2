@@ -55,7 +55,7 @@ SOCKET TCPClient::open_connection(std::string const& host, uint16_t port) const
     }
 
     if (p == nullptr)
-        throw std::runtime_error("Failed to connect.");
+        throw std::runtime_error("client: Failed to connect.");
 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), address, sizeof address);
     DBG("client: connected to {}:{}", address, sport);
