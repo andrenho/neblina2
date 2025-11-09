@@ -10,7 +10,7 @@ jobs:
     concurrency:
       group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
       cancel-in-progress: true
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     steps:
       - uses: actions/checkout@v4
@@ -25,3 +25,13 @@ jobs:
           vcpkg install openssl:x64-windows-static-md
       - name: Run tests
         run: mkdir build && cd build && cmake .. && msbuild neblina.sln /t:neblina,neblina-tests && cd Debug && dir && .\neblina-tests.exe
+      - name: Load test
+        continue-on-error: true
+        run: |
+          mkdir build-release
+          cd build-release
+          cmake ..
+          msbuild neblina.sln /t:neblina-load-test
+          cd Debug
+          .\neblina-load-test.exe -t -a 100 -n 8 -r
+          .\neblina-load-test.exe -s -a 20 -n 8 -r

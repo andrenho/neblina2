@@ -3,7 +3,12 @@
 - [x] Initial setup
 - [x] TCP server
 - [x] TCP client
-- [ ] SSL server/client
+- [x] SSL server/client
+- [ ] Load test
+  - [x] Fix SSL client threads
+  - [ ] Start server from client
+    - [ ] On Windows too
+  - [ ] Run from pipeline
 - [ ] HTTP structs
 - [ ] HTTP server and request handlers
     - [ ] Default 404

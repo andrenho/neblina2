@@ -33,11 +33,8 @@ jobs:
         working-directory: ./build
         run: |
           export LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH
-          make neblina-tests
+          make -j8 neblina-tests
           ./neblina-tests
-      #- name: Load test
-      #  working-directory: ./build
-      #  run: make neblina-load-test && ./neblina-load-test
       - name: Check for leaks
         continue-on-error: true
         working-directory: ./build
@@ -50,3 +47,12 @@ jobs:
         continue-on-error: true
         working-directory: ./build
         run: make neblina-tests-helgrind
+      - name: Load test
+        continue-on-error: true
+        run: |
+          mkdir build-release
+          cd build-release
+          cmake ..
+          make -j8 neblina-load-test
+          ./neblina-load-test -t -a 2000 -n 8 -r
+          ./neblina-load-test -s -a 100 -n 8 -r

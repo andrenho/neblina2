@@ -12,6 +12,8 @@ public:
 
     void send(std::string const &data) const override;
 
+    static void initialize_ctx();
+
 protected:
     [[nodiscard]] std::string recv(size_t n_bytes) const override;
 
