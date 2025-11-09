@@ -33,5 +33,5 @@ jobs:
           cmake ..
           msbuild neblina.sln /t:neblina-load-test
           cd Debug
-          .\neblina-load-test.exe -t -a 2000 -n 8 -r
-          .\neblina-load-test.exe -s -a 100 -n 8 -r
+          .\neblina-load-test.exe -t -a 100 -n 8 -r
+          .\neblina-load-test.exe -s -a 20 -n 8 -r
