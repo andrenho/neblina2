@@ -55,7 +55,7 @@ file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS
         src/*.cc src/*.hh)
 
 if(WIN32)
-    file(GLOB_RECURSE ADDITIONAL_FILES CONFIGURE_DEPENDS *.win32.cpp contrib/ya_getopt/yagetopt.[ch])
+    file(GLOB_RECURSE ADDITIONAL_FILES CONFIGURE_DEPENDS *.win32.cpp)
 elseif(APPLE)
     file(GLOB_RECURSE ADDITIONAL_FILES CONFIGURE_DEPENDS *.posix.cpp *.bsd.cpp)
 elseif(CMAKE_SYSTEM_NAME MATCHES "BSD")
@@ -81,7 +81,7 @@ add_executable(${PROJECT_NAME}-echossl EXCLUDE_FROM_ALL demo/echossl.cc ${SRC_FI
 file(GLOB_RECURSE TEST_FILES CONFIGURE_DEPENDS tests/*.cc tests/doctest.h)
 add_executable(${PROJECT_NAME}-tests EXCLUDE_FROM_ALL ${TEST_FILES} ${SRC_FILES})
 add_executable(${PROJECT_NAME}-load-test-server EXCLUDE_FROM_ALL loadtest/server.cc ${SRC_FILES})
-add_executable(${PROJECT_NAME}-load-test EXCLUDE_FROM_ALL loadtest/loadtest.cc ${SRC_FILES})
+add_executable(${PROJECT_NAME}-load-test EXCLUDE_FROM_ALL loadtest/loadtest.cc loadtest/ya_getopt.h loadtest/ya_getopt.c ${SRC_FILES})
 add_dependencies(${PROJECT_NAME}-load-test ${PROJECT_NAME}-load-test-server)
 
 # with sanitizers

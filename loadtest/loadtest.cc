@@ -1,6 +1,5 @@
 #include "neblina.hh"
 
-#include <getopt.h>
 #include <cstdio>
 #include <cstdlib>
 
@@ -16,6 +15,8 @@
 #else
 #  include <windows.h>
 #endif
+
+#include "ya_getopt.h"
 
 //------------------------------------------------------
 // PARSE OPTIONS
