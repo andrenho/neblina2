@@ -236,9 +236,9 @@ int main(int argc, char* argv[])
     if (config.run_server)
         server_pid = run_server(config.client_type);
 
-    std::jthread t[config.n_threads];
+    std::vector<std::jthread> t;
     for (size_t i = 0; i < config.n_threads; ++i) {
-        t[i] = std::move(std::jthread([&]{
+        t.emplace_back([&]{
             for (size_t j = 0; j < config.n_attempts; ++j) {
                 std::string str = random_string(10) + "\n";
                 std::string response;
@@ -264,7 +264,7 @@ skip:
                     results.emplace_back(result);
                 }
             }
-        }));
+        });
     }
     for (size_t i = 0; i < config.n_threads; ++i)
         t[i].join();
