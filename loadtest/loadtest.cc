@@ -302,7 +302,8 @@ skip:
         );
     }
 
-    kill_server(server_pid);
+    if (config.run_server)
+        kill_server(server_pid);
 
     return (timeout + incorrect + failed_to_connect) > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
 }
