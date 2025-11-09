@@ -238,7 +238,7 @@ int main(int argc, char* argv[])
 
     std::jthread t[config.n_threads];
     for (size_t i = 0; i < config.n_threads; ++i) {
-        t[i] = std::jthread([&]{
+        t[i] = std::move(std::jthread([&]{
             for (size_t j = 0; j < config.n_attempts; ++j) {
                 std::string str = random_string(10) + "\n";
                 std::string response;
@@ -264,7 +264,7 @@ skip:
                     results.emplace_back(result);
                 }
             }
-        });
+        }));
     }
     for (size_t i = 0; i < config.n_threads; ++i)
         t[i].join();
