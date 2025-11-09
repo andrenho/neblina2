@@ -40,7 +40,7 @@ When a PR is created on github, a Github Actions pipeline will fire the executio
 operating systems. When a tag is created, a pipeline will create a Windows downloadable executable, and place it on the
 "Release" section of the Github page.
 
-(Load tests are currently failing on Windows)
+(Load tests are currently failing on Windows - suggestion, try using libevent)
 
 ## Future state
 
